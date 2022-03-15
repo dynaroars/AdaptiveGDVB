@@ -1,0 +1,40 @@
+[distillation]
+maxmemory="64G"
+threshold=1e-9
+cuda=true
+type="regression" #type="classification" # argmin vs argmax WRONG
+precompute_teacher=true
+save_intermediate=false
+
+[distillation.parameters]
+epochs=50
+optimizer="adam"
+loss="MSE"
+
+[distillation.data]
+format="acas" # before what if stateement get_data_loader() load from csv
+batchsize=256
+presized=true
+
+[distillation.teacher]
+framework="onnx"
+input_shape=[1, 5]
+model="./configs/networks/acas_1_1.onnx"
+
+[distillation.data.train]
+shuffle=true
+
+[distillation.data.train.teacher]
+path="data/acas/train"
+
+[distillation.data.train.student]
+path="data/acas/train"
+
+[distillation.data.validation]
+shuffle=false
+
+[distillation.data.validation.teacher]
+path="data/acas/valid"
+
+[distillation.data.validation.student]
+path="data/acas/valid"
