@@ -33,7 +33,7 @@ name = 'REevo_dnnf'
 [train]
 	epochs = 10
 	drop_scheme = 'random'
-	add_scheme = 'same_as_last_relu'
+	add_scheme = 'last_same_relu'
 
 	[train.dispatch]
 		nb_gpus = 1

@@ -22,8 +22,10 @@ name = 'REevo_edz'
 			prop = [0, 4]
 
 [evolutionary]
-	iterations = 10
-	arity = 2
+	explore_iterations = 10
+	refine_iterations = 2
+	refine_arity = 2
+
 	inflation_rate = 2
 	deflation_rate = 0.5
 
@@ -34,7 +36,7 @@ name = 'REevo_edz'
 [train]
 	epochs = 10
 	drop_scheme = 'random'
-	add_scheme = 'same_as_last_relu'
+	add_scheme = 'last_same_relu'
 
 	[train.dispatch]
 		nb_gpus = 1

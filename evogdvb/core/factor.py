@@ -48,10 +48,13 @@ class Factor:
 
     def _workout(self):
         level_too_small = self._check_min_step()
-        self.explict_levels = np.arange(self.start, self.end + self.step, self.step)
+        # self.step = (self.end - self.start)/(self.nb_levels - 1)
+        # print(self.start, self.end, self.step)
+        
+        self.explicit_levels = np.arange(self.start, self.end + self.step, self.step)
         if level_too_small:
-            self.nb_levels = len(self.explict_levels)
-        assert(self.nb_levels == len(self.explict_levels)), f"{self.nb_levels} vs. {self.explict_levels}"
+            self.nb_levels = len(self.explicit_levels)
+        assert(self.nb_levels == len(self.explicit_levels)), f"{self.nb_levels} vs. {self.explicit_levels}"
 
     # scale
     def scale(self, coefficient):
@@ -81,8 +84,8 @@ class Factor:
 
     def __str__(self):
         res = f'{self.type} : ['
-        assert len(self.explict_levels) > 0
-        for x in self.explict_levels:
+        assert len(self.explicit_levels) > 0
+        for x in self.explicit_levels:
             res += f'{x}, '
         res = res[:-2] + ']'
         return res
