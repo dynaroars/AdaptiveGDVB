@@ -132,11 +132,12 @@ class EvoBench:
 
         print(f'Evo state={self.state}; Actions={list(actions)}')
 
-        print('UA', self.pivots_oa)
-        print('OA', self.pivots_ua)
+        print('UA', self.pivots_ua)
+        print('OA', self.pivots_oa)
 
         # check if no scales are needed for the entire slice
         if all(x == 1.0 for x in actions.flatten().tolist()):
+            print('GOTO: Refine due to same action compared to last step.')
             self.state = EvoState.Refine
         # explore
         else:
@@ -167,6 +168,7 @@ class EvoBench:
                 # check if goto refine state?
 
             if self.check_same_ca_configs(ca_configs, ca_configs_next):
+                print('GOTO: Refine due to same config to last step by hard bounds.')
                 self.state = EvoState.Refine
 
         return ca_configs_next
@@ -272,6 +274,7 @@ class EvoBench:
             else:
                 # update oa pivot
                 if self.pivots_oa[f.type] is None:
+                    print(f.explicit_levels[f.nb_levels-1-ub_cuts[i]])
                     self.pivots_oa[f.type] = f.explicit_levels[f.nb_levels-1-ub_cuts[i]]
                 else:
                     self.pivots_oa[f.type] = min(self.pivots_oa[f.type], f.explicit_levels[f.nb_levels-1-ub_cuts[i]])
@@ -292,46 +295,46 @@ class EvoBench:
 
         for i, f in enumerate(evo_step.factors):
             f = copy.deepcopy(f)
-            '''
-            raw = self.res_nb_solved[list(self.res_nb_solved)[0]]
-            all_levels = set(x[i] for x in raw)
-            min_level = min(all_levels)
-            max_level = max(all_levels)
-
-            print(all_levels, min_level, max_level)
-
-            pivot_min_candidates = [min_level]
-            pivot_max_candidates = [max_level]
-            for l in all_levels:
-                min_pass = True
-                max_pass = True
-                for x in raw:
-                    if x[i] <= l:
-                        if raw[x] == ca_configs['parameters']['level']['prop'] or raw[x] >= x[i]:
-                            min_pass = False
-                    if x[i] >= l:
-                        if raw[x] != 0:
-                            max_pass = False
-
-                if min_pass:
-                    pivot_min_candidates += [l]
-                if max_pass:
-                    pivot_max_candidates += [l]
-
-            print("pivot_min_candidates: ", pivot_min_candidates)
-            print("pivot_max_candidates: ", pivot_max_candidates)
             
-            start = max(pivot_min_candidates)
-            end = min(pivot_max_candidates)
-            '''
             start = self.pivots_ua[f.type]
             end = self.pivots_oa[f.type]
 
-            assert start is not None
-            assert end is not None
-            assert start > end
+            if start is None or end is None:
+                raw = self.res_nb_solved[list(self.res_nb_solved)[0]]
+                all_levels = set(x[i] for x in raw)
+                min_level = min(all_levels)
+                max_level = max(all_levels)
 
-            print("START:", start, "END:", end)
+                print(all_levels, min_level, max_level)
+
+                pivot_min_candidates = [min_level]
+                pivot_max_candidates = [max_level]
+                for l in all_levels:
+                    min_pass = True
+                    max_pass = True
+                    for x in raw:
+                        if x[i] <= l:
+                            if raw[x] == ca_configs['parameters']['level']['prop'] or raw[x] >= x[i]:
+                                min_pass = False
+                        if x[i] >= l:
+                            if raw[x] != 0:
+                                max_pass = False
+
+                    if min_pass:
+                        pivot_min_candidates += [l]
+                    if max_pass:
+                        pivot_max_candidates += [l]
+
+                print("pivot_min_candidates: ", pivot_min_candidates)
+                print("pivot_max_candidates: ", pivot_max_candidates)
+
+                if start is None:
+                    start = max(pivot_min_candidates)
+                if end is None:
+                    end = min(pivot_max_candidates)
+            print(start)
+            print(end)
+            assert start is not None and end is not None and start <= end, f'!Wrong start/end. Start: {start}, End: {end}'
 
             f.set_start_end(start, end)
             f.subdivision(arity)

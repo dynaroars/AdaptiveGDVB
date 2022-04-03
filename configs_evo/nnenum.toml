@@ -22,12 +22,15 @@ name = 'REevo_nnenum'
 			prop = [0, 4]
 
 [evolutionary]
-	iterations = 10
-	arity = 2
+	explore_iterations = 10
+	refine_iterations = 2
+	refine_arity = 2
+
 	inflation_rate = 2
 	deflation_rate = 0.5
 
 	parameters = ['neu', 'fc']
+	parameters_lower_bounds = {'fc'='1/3', 'neu'='1/3'}
 	parameters_upper_bounds = {'fc'='128/3', 'neu'='24'}
 
 [train]
@@ -38,10 +41,8 @@ name = 'REevo_nnenum'
 	[train.dispatch]
 		nb_gpus = 1
 		platform = "slurm"
-		exclude = """ai01,ai02,ai03,ai04,ai05,\
-				   affogato12,affogato13,affogato14,\
-				   adriatic02,adriatic03,adriatic04,adriatic05,adriatic06,\
-			   	   lynx01,lynx02,lynx04,lynx05,lynx06,lynx07,cheetah01,lotus"""
+		exclude = """ristretto01,ristretto02,ristretto03,ristretto04,lynx02,cheetah01,ai01"""
+		
 
 [verify]
 	debug = true
@@ -57,5 +58,5 @@ name = 'REevo_nnenum'
 		platform = "slurm"
 		#reservation = "dx3yy_28"
 		nb_cpus = 6
-		nodes = ['cortado06','cortado07','cortado08']
-		task_per_node = 3
+		nodes = ['cortado02','cortado03','cortado04','cortado05','cortado06','cortado07','cortado08','cortado09']
+		task_per_node = 7
