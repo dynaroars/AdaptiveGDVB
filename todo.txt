@@ -1,0 +1,8 @@
+1. TODO:
+    
+
+2. Problem:
+
+
+3. Temp:
+    for i in range(1, self.explore_iter+self.refine_iter+1):

@@ -1,4 +1,3 @@
-from asyncio.log import logger
 import copy
 import numpy as np
 
@@ -14,16 +13,16 @@ from .evo_step import EvoStep
 from gdvb.plot.pie_scatter import PieScatter2D
 
 
-class EvoState(Enum):
-    Explore = auto()
-    Refine = auto()
-    Done = auto()
-
-
 class EvoBench:
+    class EvoState(Enum):
+        Explore = auto()
+        Refine = auto()
+
     def __init__(self, seed_benchmark):
         self.logger = seed_benchmark.settings.logger
         self.seed_benchmark = seed_benchmark
+        self.benchmark_name = seed_benchmark.settings.name
+        self.dnn_configs = seed_benchmark.settings.dnn_configs
         # TODO: only support one verifier at a time
         self.verifier = list(seed_benchmark.settings.verification_configs['verifiers'].values())[0][0]
         self.evo_configs = seed_benchmark.settings.evolutionary
@@ -33,12 +32,11 @@ class EvoBench:
         assert len(self.evo_params) == 2
         self._init_parameters()
 
-
     def _init_parameters(self):
-        self.state = EvoState.Explore
-        self.steps = []
-        self.pivots_ua = {} # under-approximation
-        self.pivots_oa = {} # over-approximation
+        self.state = self.EvoState.Explore
+        self.benchmarks = []
+        self.pivots_ua = {}  # under-approximation
+        self.pivots_oa = {}  # over-approximation
         self.res = {}
         self.refine_iterations = 3
 
@@ -46,99 +44,110 @@ class EvoBench:
             self.pivots_ua[p] = None
             self.pivots_oa[p] = None
 
-
     def run(self):
-        verification_benchmark = self.seed_benchmark
+        initial_step = EvoStep(self.seed_benchmark, self.evo_params, EvoStep.Direction.Both, 0)
+        self.benchmarks += [initial_step]
 
-        benchmark_name = verification_benchmark.settings.name
-        dnn_configs = verification_benchmark.settings.dnn_configs
-
-        self.steps += [EvoStep(self.seed_benchmark, self.evo_params)]
-
-        for i in range(1, self.explore_iter+self.refine_iter+1, 1):
-            evo_step = self.steps[-1]
-
-            # -- print info
-            print('\n--------------------------------------------')
-            print(f"Evo iter={i}:")
-            for p in self.evo_params:
-                print(f"    {p}={[f'{x:.6f}' for x in sorted(set([x[p] for x in evo_step.benchmark.ca]))]}")
-            print()
-            # --
-
+        # explore
+        homework = [initial_step]
+        while homework:
+            evo_step = homework.pop(0)
             evo_step.forward()
             evo_step.evaluate()
-            evo_step.plot(i)
+            evo_step.plot()
 
             self.collect_res(evo_step)
-            self.plot(i)
+            self.plot(evo_step)
 
-            next_ca_configs = self.evolve(evo_step)
+            if evo_step.direction == EvoStep.Direction.Both:
+                next_evo_step = self.evolve(evo_step, EvoStep.Direction.Up)
+                if next_evo_step:
+                    self.benchmarks += [next_evo_step]
+                    homework += [next_evo_step]
+                next_evo_step = self.evolve(evo_step, EvoStep.Direction.Down)
+                if next_evo_step:
+                    self.benchmarks += [next_evo_step]
+                    homework += [next_evo_step]
+            elif evo_step.direction == EvoStep.Direction.Up:
+                next_evo_step = self.evolve(evo_step, EvoStep.Direction.Up)
+                if next_evo_step:
+                    self.benchmarks += [next_evo_step]
+                    homework += [next_evo_step]
+            elif evo_step.direction == EvoStep.Direction.Down:
+                next_evo_step = self.evolve(evo_step, EvoStep.Direction.Down)
+                if next_evo_step:
+                    self.benchmarks += [next_evo_step]
+                    homework += [next_evo_step]
+            else:
+                raise ValueError(f'Unknown evolve direction: {evo_step.direction}')
 
-            if self.state == EvoState.Done:
-                break
+        self.logger.info('Exploration finished successfully!')
+        exit()
 
-            next_benchmark = VerificationBenchmark(f'{benchmark_name}_{i}',
-                                                   dnn_configs,
-                                                   next_ca_configs,
-                                                   evo_step.benchmark.settings)
+        # clean previous benchmark results for refinement phase
+        self.res = None
+        self.res_nb_solved = None
 
-            next_evo_step = EvoStep(next_benchmark, self.evo_params)
+        # refine
+        while homework:
+            evo_step = homework.pop(0)
+            self.refine_iterations -= 1
+            if self.refine_iterations == 0:
+                next_ca_configs = None
 
-            self.steps += [next_evo_step]
+        self.logger.info('Refinement finished successfully!')
 
-        self.logger.info('EvoGDVB finished successfully!')
-
-
-    def evolve(self, evo_step):
+    def evolve(self, evo_step, direction: EvoStep.Direction):
         ca_configs = evo_step.benchmark.ca_configs
 
         # A1: Exploration State
         # 1) for all factors, check if exploration is needed
         # 2) for all factors, check if configred bounds are reached
         # if 1) or 2), go to A2: Refinement state
-        if self.state == EvoState.Explore:
-            next_ca_configs = self.explore(evo_step)
-            if self.check_same_ca_configs(ca_configs, next_ca_configs):
-                self.state = EvoState.Refine
+        if self.state == self.EvoState.Explore:
+            next_ca_configs = self.explore(evo_step, direction)
+            goon = not self.check_same_ca_configs(ca_configs, next_ca_configs)
 
         # A2 : Refinement State
         # 1) check starting point based on observations from the exploration states
         # 2) prune overly easy and overly hard levels
         # 3) stop when necessary, go to analyze state
-        if self.state == EvoState.Refine:
-            self.refine_iterations -= 1
-            if self.refine_iterations == 0:
-                next_ca_configs = None
-                self.state = EvoState.Done
-            else:
-                next_ca_configs = self.refine(evo_step)
+        elif self.state == self.EvoState.Refine:
+            next_ca_configs = self.refine(evo_step)
+            goon = not self.check_same_ca_configs(ca_configs, next_ca_configs)
+        else:
+            raise ValueError(f'Unknown evolve state: {self.state}')
 
-                # clean previous benchmark results for refinement phase
-                self.res = None
-                self.res_nb_solved = None
+        if goon:
+            next_benchmark = VerificationBenchmark(f'{self.benchmark_name}_{evo_step.iteration}_{evo_step.direction}',
+                                                   self.dnn_configs,
+                                                   next_ca_configs,
+                                                   evo_step.benchmark.settings)
 
-                if self.check_same_ca_configs(ca_configs, next_ca_configs):
-                    self.state = EvoState.Done
+            next_evo_step = EvoStep(next_benchmark,
+                                    self.evo_params,
+                                    direction,
+                                    evo_step.iteration+1)
+        else:
+            next_evo_step = None
 
-        return next_ca_configs
+        return next_evo_step
 
-
-    def explore(self, evo_step):
+    def explore(self, evo_step: EvoStep, direction: EvoStep.Direction):
         actions = self.update_pivots(evo_step)
 
         ca_configs = evo_step.benchmark.ca_configs
         ca_configs_next = copy.deepcopy(ca_configs)
 
-        print(f'Evo state={self.state}; Actions={list(actions)}')
+        print(f'Evo state: {self.state}; Actions: {list(actions)}')
 
-        print('UA', self.pivots_ua)
-        print('OA', self.pivots_oa)
+        print('UA\t', self.pivots_ua)
+        print('OA\t', self.pivots_oa)
 
         # check if no scales are needed for the entire slice
         if all(x == 1.0 for x in actions.flatten().tolist()):
             print('GOTO: Refine due to same action compared to last step.')
-            self.state = EvoState.Refine
+            self.state = self.EvoState.Refine
         # explore
         else:
             parameters_lower_bounds = self.evo_configs['parameters_lower_bounds']
@@ -148,7 +157,7 @@ class EvoBench:
                 f = copy.deepcopy(f)
                 start = f.start * F(actions[i][0])
                 end = f.end * F(actions[i][1])
-                
+
                 # check hard bounds from evo configs
                 if f.type in parameters_lower_bounds:
                     start = max(start, F(parameters_lower_bounds[f.type]))
@@ -157,7 +166,7 @@ class EvoBench:
 
                 # skip factor-level modification if start >= end
                 if start >= end:
-                    logger.warn(f'START > END!!! NO MODIFICATION TO FACTOR: {f.type}')
+                    self.logger.warn(f'START > END!!! NO MODIFICATION TO FACTOR: {f.type}')
                     continue
 
                 f.set_start_end(start, end)
@@ -165,14 +174,8 @@ class EvoBench:
                 start, end, levels = f.get()
                 ca_configs_next['parameters']['level'][f.type] = levels
                 ca_configs_next['parameters']['range'][f.type] = [start, end]
-                # check if goto refine state?
-
-            if self.check_same_ca_configs(ca_configs, ca_configs_next):
-                print('GOTO: Refine due to same config to last step by hard bounds.')
-                self.state = EvoState.Refine
 
         return ca_configs_next
-
 
     def update_pivots(self, evo_step):
         nb_property = evo_step.benchmark.ca_configs['parameters']['level']['prop']
@@ -186,28 +189,28 @@ class EvoBench:
 
         max_ids = np.array(np.where(max_value == res)).T
         ua_candidates = []
-        
+
         # Estimate verification boundary under-approximation
         for max_id in max_ids:
             ids = np.array(list(np.ndindex(*(max_id+1))))
-            
+
             issubset = True
             for x in ids:
                 if x.tolist() not in max_ids.tolist():
                     issubset = False
                     break
-            
+
             # print('Subject:', max_id, 'Result:', issubset)
             if issubset:
                 ua_candidates += [max_id]
-        
+
         # expand lower
         if len(ua_candidates) == 0:
             pivot_ua_id = None
         # pivot lb found
         else:
             levels = np.array([x.explicit_levels for x in evo_step.factors], dtype=F)
-            
+
             ua_candidates_real_level = []
             for mc in ua_candidates:
                 temp = []
@@ -244,7 +247,7 @@ class EvoBench:
 
             print(f'[{f.type}] lb_cut: {lb_cut}; ub_cut: {ub_cut}.')
 
-        actions = np.zeros([len(self.evo_params),2])
+        actions = np.zeros([len(self.evo_params), 2])
         for i, f in enumerate(evo_step.factors):
 
             # update under-approximation pivot
@@ -258,7 +261,7 @@ class EvoBench:
                     self.pivots_ua[f.type] = ua_candidates_real_level[pivot_ua_id][i]
                 else:
                     self.pivots_ua[f.type] = max(self.pivots_ua[f.type], ua_candidates_real_level[pivot_ua_id][i])
-                
+
                 # T: ua pivot too small -> scale up
                 if lb_cuts[i] is not None:
                     actions[i][0] = self.evo_configs['inflation_rate']
@@ -287,7 +290,6 @@ class EvoBench:
 
         return actions
 
-
     def refine(self, evo_step):
         ca_configs = evo_step.benchmark.ca_configs
         ca_configs_next = copy.deepcopy(ca_configs)
@@ -295,7 +297,7 @@ class EvoBench:
 
         for i, f in enumerate(evo_step.factors):
             f = copy.deepcopy(f)
-            
+
             start = self.pivots_ua[f.type]
             end = self.pivots_oa[f.type]
 
@@ -345,7 +347,6 @@ class EvoBench:
 
         return ca_configs_next
 
-
     def check_same_ca_configs(self, this, that):
         res = []
         for p in self.evo_params:
@@ -359,10 +360,9 @@ class EvoBench:
             res += [this_start == that_start]
             res += [this_end == that_end]
             res += [this_level == that_level]
-            
+
         # print(res, all(x for x in res))
         return all(x for x in res)
-
 
     def collect_res(self, evo_step):
         if not self.res:
@@ -381,20 +381,21 @@ class EvoBench:
         data2 = list(evo_step.nb_solved.values())[0]
         data2 = data2.reshape(-1, 1)
 
-        verifier = list(evo_step.answers)[0]
+        # verifier = list(evo_step.answers)[0]
+        verifier = self.verifier
         for i, id in enumerate(ids):
             self.res[verifier][tuple(id)] = data[i]
             self.res_nb_solved[verifier][tuple(id)] = data2[i]
 
-
     # plot two factors with properties: |F| = 3
     # TODO: update plotter to accept more than two factors
-    def plot(self, iteration):
-        if len(self.evo_params)  == 2:
+    def plot(self, evo_step):
+        if len(self.evo_params) == 2:
             labels = [x for x in self.evo_params]
             ticks = {x: set() for x in self.evo_params}
 
-            verifier = list(self.steps[0].answers)[0]
+            #verifier = list(self.benchmarks[0].answers)[0]
+            verifier = self.verifier
             ticks = np.array([list(x) for x in self.res[verifier].keys()], dtype=np.float32)
             data = np.array([x for x in self.res[verifier].values()], dtype=np.float32)
 
@@ -409,15 +410,14 @@ class EvoBench:
 
             pie_scatter = PieScatter2D(data)
             pie_scatter.draw_with_ticks(ticks_f1, ticks_f2, labels_f1, labels_f2)
-            
 
             pdf_dir = f'{self.seed_benchmark.settings.root}/figures/'
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
-            pie_scatter.save(f'{pdf_dir}/all_{iteration}.png')
+            pie_scatter.save(f'{pdf_dir}/all_{evo_step.iteration}_{evo_step.direction}.png')
 
             pie_scatter.draw_with_ticks(ticks_f1, ticks_f2, labels_f1, labels_f2, x_log_scale=True, y_log_scale=True)
-            pie_scatter.save(f'{pdf_dir}/all_log_{iteration}.png')
-            
+            pie_scatter.save(f'{pdf_dir}/all_log_{evo_step.iteration}_{evo_step.direction}.png')
+
         else:
             # plot two factors with properties: |F| >= 3
             # TODO: update plotter to accept more than two factors

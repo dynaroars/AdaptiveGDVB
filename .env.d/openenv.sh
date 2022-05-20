@@ -7,7 +7,7 @@ export EvoGDVB=`pwd`
 if [ -z ${EvoGDVB} ]; then
   export EvoGDVB=`pwd`
 fi
-export TMPDIR=$EvoGDVB/tmp
+# export TMPDIR=$EvoGDVB/tmp
 
 # Libraries
 export GDVB="${EvoGDVB}/lib/GDVB"

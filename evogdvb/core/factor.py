@@ -50,7 +50,7 @@ class Factor:
         level_too_small = self._check_min_step()
         # self.step = (self.end - self.start)/(self.nb_levels - 1)
         # print(self.start, self.end, self.step)
-        
+
         self.explicit_levels = np.arange(self.start, self.end + self.step, self.step)
         if level_too_small:
             self.nb_levels = len(self.explicit_levels)

@@ -2,22 +2,31 @@ import sys
 import time
 import numpy as np
 
+from enum import Enum, auto
+
 from pathlib import Path
 from tqdm import tqdm
 
-from fractions import Fraction as F
 
 from .factor import Factor
 
+from gdvb.core.verification_benchmark import VerificationBenchmark
 from gdvb.plot.pie_scatter import PieScatter2D
 
 TIME_BREAK = 10
 
 
 class EvoStep:
-    def __init__(self, benchmark, evo_params):
+    class Direction(Enum):
+        Both = auto()
+        Up = auto()
+        Down = auto()
+
+    def __init__(self, benchmark: VerificationBenchmark, evo_params: list, direction: Direction, iteration: int):
         self.benchmark = benchmark
         self.evo_params = evo_params
+        self.iteration = iteration
+        self.direction = direction
         self.nb_solved = None
         self.answers = None
         self.factors = self._gen_factors()
@@ -115,11 +124,10 @@ class EvoStep:
         self.nb_solved = solved_per_verifiers
         self.answers = answers_per_verifiers
 
-
-    def plot(self, iteration):
-        if len(self.evo_params)  == 2:
+    def plot(self):
+        if len(self.evo_params) == 2:
             # TODO: only supports one([0]) verifier per time
-            data = list(self.answers.values())[0] 
+            data = list(self.answers.values())[0]
 
             labels = self.evo_params
             ticks = [np.array(x.explicit_levels, dtype=np.float32).tolist() for x in self.factors]
@@ -134,7 +142,14 @@ class EvoStep:
             # pdf_dir = f'./img/{list(self.answers.keys())[0]}'
             pdf_dir = f'{self.benchmark.settings.root}/figures/'
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
-            pie_scatter.save(f'{pdf_dir}/{iteration}.png')
+            pie_scatter.save(f'{pdf_dir}/{self.iteration}_{self.direction}.png')
 
         else:
             raise NotImplementedError
+
+    def __str__(self) -> str:
+        res = f'Iter:\t{self.iteration}'
+        res += f'Dir:\t{self.direction}'
+        for p in self.evo_params:
+            res += f"{p}:\t{[f'{x:.3f}' for x in sorted(set([x[p] for x in self.benchmark.ca]))]}\n"
+        return res
