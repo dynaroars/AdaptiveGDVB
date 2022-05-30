@@ -22,7 +22,13 @@ class EvoStep:
         Up = auto()
         Down = auto()
 
-    def __init__(self, benchmark: VerificationBenchmark, evo_params: list, direction: Direction, iteration: int):
+    def __init__(
+        self,
+        benchmark: VerificationBenchmark,
+        evo_params: list,
+        direction: Direction,
+        iteration: int,
+    ):
         self.benchmark = benchmark
         self.evo_params = evo_params
         self.iteration = iteration
@@ -34,11 +40,10 @@ class EvoStep:
     def _gen_factors(self):
         factors = []
         for p in self.evo_params:
-            start = self.benchmark.ca_configs['parameters']['range'][p][0]
-            end = self.benchmark.ca_configs['parameters']['range'][p][1]
-            level = self.benchmark.ca_configs['parameters']['level'][p]
-            fc_conv_ids = {'fc': self.benchmark.fc_ids,
-                           'conv': self.benchmark.conv_ids}
+            start = self.benchmark.ca_configs["parameters"]["range"][p][0]
+            end = self.benchmark.ca_configs["parameters"]["range"][p][1]
+            level = self.benchmark.ca_configs["parameters"]["level"][p]
+            fc_conv_ids = {"fc": self.benchmark.fc_ids, "conv": self.benchmark.conv_ids}
             factors += [Factor(p, start, end, level, fc_conv_ids)]
         return factors
 
@@ -48,10 +53,12 @@ class EvoStep:
 
         # wait for training
         nb_train_tasks = len(self.benchmark.verification_problems)
-        progress_bar = tqdm(total=nb_train_tasks,
-                            desc="Waiting on training ... ",
-                            ascii=False,
-                            file=sys.stdout)
+        progress_bar = tqdm(
+            total=nb_train_tasks,
+            desc="Waiting on training ... ",
+            ascii=False,
+            file=sys.stdout,
+        )
         nb_trained_pre = self.benchmark.trained(True)
 
         progress_bar.update(nb_trained_pre)
@@ -71,10 +78,12 @@ class EvoStep:
 
         # wait for verification
         nb_verification_tasks = len(self.benchmark.verification_problems)
-        progress_bar = tqdm(total=nb_verification_tasks,
-                            desc="Waiting on verification ... ",
-                            ascii=False,
-                            file=sys.stdout)
+        progress_bar = tqdm(
+            total=nb_verification_tasks,
+            desc="Waiting on verification ... ",
+            ascii=False,
+            file=sys.stdout,
+        )
 
         nb_verified_pre = self.benchmark.verified(True)
         progress_bar.update(nb_verified_pre)
@@ -100,7 +109,7 @@ class EvoStep:
                 ids += [vpc[x] for x in vpc if x == p]
             indexes[p] = sorted(set(ids))
 
-        nb_property = ca_configs['parameters']['level']['prop']
+        nb_property = ca_configs["parameters"]["level"]["prop"]
         solved_per_verifiers = {}
         answers_per_verifiers = {}
         for problem in benchmark.verification_problems:
@@ -108,18 +117,19 @@ class EvoStep:
                 if verifier not in solved_per_verifiers:
                     shape = ()
                     for p in self.evo_params:
-                        shape += (ca_configs['parameters']['level'][p],)
-                    solved_per_verifiers[verifier] = np.zeros(
-                        shape, dtype=np.int)
+                        shape += (ca_configs["parameters"]["level"][p],)
+                    solved_per_verifiers[verifier] = np.zeros(shape, dtype=np.int)
                     answers_per_verifiers[verifier] = np.empty(
-                        shape+(nb_property,), dtype=np.int)
-                idx = tuple(indexes[x].index(problem.vpc[x])
-                            for x in self.evo_params)
-                if problem.verification_results[verifier][0] in ['sat', 'unsat']:
+                        shape + (nb_property,), dtype=np.int
+                    )
+                idx = tuple(indexes[x].index(problem.vpc[x]) for x in self.evo_params)
+                if problem.verification_results[verifier][0] in ["sat", "unsat"]:
                     solved_per_verifiers[verifier][idx] += 1
-                prop_id = problem.vpc['prop']
-                answer_code = benchmark.settings.answer_code[problem.verification_results[verifier][0]]
-                answers_per_verifiers[verifier][idx+(prop_id,)] = answer_code
+                prop_id = problem.vpc["prop"]
+                answer_code = benchmark.settings.answer_code[
+                    problem.verification_results[verifier][0]
+                ]
+                answers_per_verifiers[verifier][idx + (prop_id,)] = answer_code
 
         self.nb_solved = solved_per_verifiers
         self.answers = answers_per_verifiers
@@ -130,26 +140,29 @@ class EvoStep:
             data = list(self.answers.values())[0]
 
             labels = self.evo_params
-            ticks = [np.array(x.explicit_levels, dtype=np.float32).tolist() for x in self.factors]
+            ticks = [
+                np.array(x.explicit_levels, dtype=np.float32).tolist()
+                for x in self.factors
+            ]
 
             # print('XXXXXXXXXXXXXXXXX', set(sorted([np.array(x.explicit_levels).tolist() for x in self.factors][0])))
             # print('XXXXXXXXXXXXXXXXX', set(sorted([np.array(x.explicit_levels).tolist() for x in self.factors][1])))
 
-            x_ticks = [f'{x:.4f}' for x in ticks[0]]
-            y_ticks = [f'{x:.4f}' for x in ticks[1]]
+            x_ticks = [f"{x:.4f}" for x in ticks[0]]
+            y_ticks = [f"{x:.4f}" for x in ticks[1]]
             pie_scatter = PieScatter2D(data)
             pie_scatter.draw(x_ticks, y_ticks, labels[0], labels[1])
             # pdf_dir = f'./img/{list(self.answers.keys())[0]}'
-            pdf_dir = f'{self.benchmark.settings.root}/figures/'
+            pdf_dir = f"{self.benchmark.settings.root}/figures/"
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
-            pie_scatter.save(f'{pdf_dir}/{self.iteration}_{self.direction}.png')
+            pie_scatter.save(f"{pdf_dir}/{self.iteration}_{self.direction}.png")
 
         else:
             raise NotImplementedError
 
     def __str__(self) -> str:
-        res = f'Iter:\t{self.iteration}'
-        res += f'Dir:\t{self.direction}'
+        res = f"Iter:\t{self.iteration}"
+        res += f"Dir:\t{self.direction}"
         for p in self.evo_params:
             res += f"{p}:\t{[f'{x:.3f}' for x in sorted(set([x[p] for x in self.benchmark.ca]))]}\n"
         return res

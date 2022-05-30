@@ -10,13 +10,12 @@ def gen(settings):
     start_time = datetime.datetime.now()
     random.seed(settings.seed)
 
-    verification_benchmark = VerificationBenchmark(settings.name,
-                                                   settings.dnn_configs,
-                                                   settings.ca_configs,
-                                                   settings)
+    verification_benchmark = VerificationBenchmark(
+        settings.name, settings.dnn_configs, settings.ca_configs, settings
+    )
 
     #  perform tasks
-    if settings.task == 'evolutionary':
+    if settings.task == "evolutionary":
         evo_bench = EvoBench(verification_benchmark)
         evo_bench.run()
     else:
@@ -24,4 +23,4 @@ def gen(settings):
 
     end_time = datetime.datetime.now()
     duration = (end_time - start_time).total_seconds()
-    settings.logger.info(f'Spent {duration} seconds.')
+    settings.logger.info(f"Spent {duration} seconds.")

@@ -24,11 +24,13 @@ class EvoBench:
         self.benchmark_name = seed_benchmark.settings.name
         self.dnn_configs = seed_benchmark.settings.dnn_configs
         # TODO: only support one verifier at a time
-        self.verifier = list(seed_benchmark.settings.verification_configs['verifiers'].values())[0][0]
+        self.verifier = list(
+            seed_benchmark.settings.verification_configs["verifiers"].values()
+        )[0][0]
         self.evo_configs = seed_benchmark.settings.evolutionary
-        self.evo_params = self.evo_configs['parameters']
-        self.explore_iter = self.evo_configs['explore_iterations']
-        self.refine_iter = self.evo_configs['refine_iterations']
+        self.evo_params = self.evo_configs["parameters"]
+        self.explore_iter = self.evo_configs["explore_iterations"]
+        self.refine_iter = self.evo_configs["refine_iterations"]
         assert len(self.evo_params) == 2
         self._init_parameters()
 
@@ -45,7 +47,9 @@ class EvoBench:
             self.pivots_oa[p] = None
 
     def run(self):
-        initial_step = EvoStep(self.seed_benchmark, self.evo_params, EvoStep.Direction.Both, 0)
+        initial_step = EvoStep(
+            self.seed_benchmark, self.evo_params, EvoStep.Direction.Both, 0
+        )
         self.benchmarks += [initial_step]
 
         # explore
@@ -79,9 +83,9 @@ class EvoBench:
                     self.benchmarks += [next_evo_step]
                     homework += [next_evo_step]
             else:
-                raise ValueError(f'Unknown evolve direction: {evo_step.direction}')
+                raise ValueError(f"Unknown evolve direction: {evo_step.direction}")
 
-        self.logger.info('Exploration finished successfully!')
+        self.logger.info("Exploration finished successfully!")
         exit()
 
         # clean previous benchmark results for refinement phase
@@ -95,14 +99,14 @@ class EvoBench:
             if self.refine_iterations == 0:
                 next_ca_configs = None
 
-        self.logger.info('Refinement finished successfully!')
+        self.logger.info("Refinement finished successfully!")
 
     def evolve(self, evo_step, direction: EvoStep.Direction):
         ca_configs = evo_step.benchmark.ca_configs
 
         # A1: Exploration State
         # 1) for all factors, check if exploration is needed
-        # 2) for all factors, check if configred bounds are reached
+        # 2) for all factors, check if configured bounds are reached
         # if 1) or 2), go to A2: Refinement state
         if self.state == self.EvoState.Explore:
             next_ca_configs = self.explore(evo_step, direction)
@@ -116,18 +120,19 @@ class EvoBench:
             next_ca_configs = self.refine(evo_step)
             goon = not self.check_same_ca_configs(ca_configs, next_ca_configs)
         else:
-            raise ValueError(f'Unknown evolve state: {self.state}')
+            raise ValueError(f"Unknown evolve state: {self.state}")
 
         if goon:
-            next_benchmark = VerificationBenchmark(f'{self.benchmark_name}_{evo_step.iteration}_{evo_step.direction}',
-                                                   self.dnn_configs,
-                                                   next_ca_configs,
-                                                   evo_step.benchmark.settings)
+            next_benchmark = VerificationBenchmark(
+                f"{self.benchmark_name}_{evo_step.iteration}_{evo_step.direction}",
+                self.dnn_configs,
+                next_ca_configs,
+                evo_step.benchmark.settings,
+            )
 
-            next_evo_step = EvoStep(next_benchmark,
-                                    self.evo_params,
-                                    direction,
-                                    evo_step.iteration+1)
+            next_evo_step = EvoStep(
+                next_benchmark, self.evo_params, direction, evo_step.iteration + 1
+            )
         else:
             next_evo_step = None
 
@@ -139,19 +144,19 @@ class EvoBench:
         ca_configs = evo_step.benchmark.ca_configs
         ca_configs_next = copy.deepcopy(ca_configs)
 
-        print(f'Evo state: {self.state}; Actions: {list(actions)}')
+        print(f"Evo state: {self.state}; Actions: {list(actions)}")
 
-        print('UA\t', self.pivots_ua)
-        print('OA\t', self.pivots_oa)
+        print("UA\t", self.pivots_ua)
+        print("OA\t", self.pivots_oa)
 
         # check if no scales are needed for the entire slice
         if all(x == 1.0 for x in actions.flatten().tolist()):
-            print('GOTO: Refine due to same action compared to last step.')
+            print("GOTO: Refine due to same action compared to last step.")
             self.state = self.EvoState.Refine
         # explore
         else:
-            parameters_lower_bounds = self.evo_configs['parameters_lower_bounds']
-            parameters_upper_bounds = self.evo_configs['parameters_upper_bounds']
+            parameters_lower_bounds = self.evo_configs["parameters_lower_bounds"]
+            parameters_upper_bounds = self.evo_configs["parameters_upper_bounds"]
 
             for i, f in enumerate(evo_step.factors):
                 f = copy.deepcopy(f)
@@ -166,20 +171,22 @@ class EvoBench:
 
                 # skip factor-level modification if start >= end
                 if start >= end:
-                    self.logger.warn(f'START > END!!! NO MODIFICATION TO FACTOR: {f.type}')
+                    self.logger.warn(
+                        f"START > END!!! NO MODIFICATION TO FACTOR: {f.type}"
+                    )
                     continue
 
                 f.set_start_end(start, end)
 
                 start, end, levels = f.get()
-                ca_configs_next['parameters']['level'][f.type] = levels
-                ca_configs_next['parameters']['range'][f.type] = [start, end]
+                ca_configs_next["parameters"]["level"][f.type] = levels
+                ca_configs_next["parameters"]["range"][f.type] = [start, end]
 
         return ca_configs_next
 
     def update_pivots(self, evo_step):
-        nb_property = evo_step.benchmark.ca_configs['parameters']['level']['prop']
-        #nb_levels = np.array([x.nb_levels for x in evo_step.factors])
+        nb_property = evo_step.benchmark.ca_configs["parameters"]["level"]["prop"]
+        # nb_levels = np.array([x.nb_levels for x in evo_step.factors])
         res = evo_step.nb_solved[self.verifier]
         # TEST res
         # res = np.array([[5,5,5],[5,5,1],[3,1,5]])
@@ -192,7 +199,7 @@ class EvoBench:
 
         # Estimate verification boundary under-approximation
         for max_id in max_ids:
-            ids = np.array(list(np.ndindex(*(max_id+1))))
+            ids = np.array(list(np.ndindex(*(max_id + 1))))
 
             issubset = True
             for x in ids:
@@ -217,7 +224,9 @@ class EvoBench:
                 for d_i, x in enumerate(mc):
                     temp += [levels[d_i][x]]
                 ua_candidates_real_level += [np.array(temp)]
-            ua_candidates_real_level_prod = [np.prod(x) for x in ua_candidates_real_level]
+            ua_candidates_real_level_prod = [
+                np.prod(x) for x in ua_candidates_real_level
+            ]
             print(ua_candidates_real_level)
             print(ua_candidates_real_level_prod)
             pivot_ua_id = np.argmax(ua_candidates_real_level_prod)
@@ -245,7 +254,7 @@ class EvoBench:
             print(ub_cut)
             ub_cuts += [ub_cut]
 
-            print(f'[{f.type}] lb_cut: {lb_cut}; ub_cut: {ub_cut}.')
+            print(f"[{f.type}] lb_cut: {lb_cut}; ub_cut: {ub_cut}.")
 
         actions = np.zeros([len(self.evo_params), 2])
         for i, f in enumerate(evo_step.factors):
@@ -253,18 +262,20 @@ class EvoBench:
             # update under-approximation pivot
             # ua pivot not found: scale down
             if pivot_ua_id is None:
-                actions[i][0] = self.evo_configs['deflation_rate']
+                actions[i][0] = self.evo_configs["deflation_rate"]
             # ua pivot found: check if ua pivot on border
             else:
                 # update ua pivot
                 if self.pivots_ua[f.type] is None:
                     self.pivots_ua[f.type] = ua_candidates_real_level[pivot_ua_id][i]
                 else:
-                    self.pivots_ua[f.type] = max(self.pivots_ua[f.type], ua_candidates_real_level[pivot_ua_id][i])
+                    self.pivots_ua[f.type] = max(
+                        self.pivots_ua[f.type], ua_candidates_real_level[pivot_ua_id][i]
+                    )
 
                 # T: ua pivot too small -> scale up
                 if lb_cuts[i] is not None:
-                    actions[i][0] = self.evo_configs['inflation_rate']
+                    actions[i][0] = self.evo_configs["inflation_rate"]
                 # F: ua pivot not too small -> don't scale
                 else:
                     actions[i][0] = 1
@@ -272,18 +283,23 @@ class EvoBench:
             # update over-approximation pivot
             # oa pivot not found: scale up
             if ub_cuts[i] is None:
-                actions[i][1] = self.evo_configs['inflation_rate']
+                actions[i][1] = self.evo_configs["inflation_rate"]
             # oa pivot found: check if oa pivot on border
             else:
                 # update oa pivot
                 if self.pivots_oa[f.type] is None:
-                    print(f.explicit_levels[f.nb_levels-1-ub_cuts[i]])
-                    self.pivots_oa[f.type] = f.explicit_levels[f.nb_levels-1-ub_cuts[i]]
+                    print(f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]])
+                    self.pivots_oa[f.type] = f.explicit_levels[
+                        f.nb_levels - 1 - ub_cuts[i]
+                    ]
                 else:
-                    self.pivots_oa[f.type] = min(self.pivots_oa[f.type], f.explicit_levels[f.nb_levels-1-ub_cuts[i]])
+                    self.pivots_oa[f.type] = min(
+                        self.pivots_oa[f.type],
+                        f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]],
+                    )
                 # T: oa pivot too large -> scale down
-                if ub_cuts[i]+1 == f.nb_levels:
-                    actions[i][1] = self.evo_configs['deflation_rate']
+                if ub_cuts[i] + 1 == f.nb_levels:
+                    actions[i][1] = self.evo_configs["deflation_rate"]
                 # F: oa pivot not too large -> don't scale
                 else:
                     actions[i][1] = 1
@@ -293,7 +309,7 @@ class EvoBench:
     def refine(self, evo_step):
         ca_configs = evo_step.benchmark.ca_configs
         ca_configs_next = copy.deepcopy(ca_configs)
-        arity = self.evo_configs['refine_arity']
+        arity = self.evo_configs["refine_arity"]
 
         for i, f in enumerate(evo_step.factors):
             f = copy.deepcopy(f)
@@ -316,7 +332,10 @@ class EvoBench:
                     max_pass = True
                     for x in raw:
                         if x[i] <= l:
-                            if raw[x] == ca_configs['parameters']['level']['prop'] or raw[x] >= x[i]:
+                            if (
+                                raw[x] == ca_configs["parameters"]["level"]["prop"]
+                                or raw[x] >= x[i]
+                            ):
                                 min_pass = False
                         if x[i] >= l:
                             if raw[x] != 0:
@@ -336,26 +355,28 @@ class EvoBench:
                     end = min(pivot_max_candidates)
             print(start)
             print(end)
-            assert start is not None and end is not None and start <= end, f'!Wrong start/end. Start: {start}, End: {end}'
+            assert (
+                start is not None and end is not None and start <= end
+            ), f"!Wrong start/end. Start: {start}, End: {end}"
 
             f.set_start_end(start, end)
             f.subdivision(arity)
 
             start, end, levels = f.get()
-            ca_configs_next['parameters']['level'][f.type] = levels
-            ca_configs_next['parameters']['range'][f.type] = [start, end]
+            ca_configs_next["parameters"]["level"][f.type] = levels
+            ca_configs_next["parameters"]["range"][f.type] = [start, end]
 
         return ca_configs_next
 
     def check_same_ca_configs(self, this, that):
         res = []
         for p in self.evo_params:
-            this_start = F(this['parameters']['range'][p][0])
-            that_start = F(that['parameters']['range'][p][0])
-            this_end = F(this['parameters']['range'][p][1])
-            that_end = F(that['parameters']['range'][p][1])
-            this_level = F(this['parameters']['level'][p])
-            that_level = F(that['parameters']['level'][p])
+            this_start = F(this["parameters"]["range"][p][0])
+            that_start = F(that["parameters"]["range"][p][0])
+            this_end = F(this["parameters"]["range"][p][1])
+            that_end = F(that["parameters"]["range"][p][1])
+            this_level = F(this["parameters"]["level"][p])
+            that_level = F(that["parameters"]["level"][p])
 
             res += [this_start == that_start]
             res += [this_end == that_end]
@@ -372,8 +393,9 @@ class EvoBench:
         levels = tuple(f.explicit_levels for f in evo_step.factors)
 
         # TODO : WTF???? how to separate ndarray _,_ = np.xxx(x)???
-        ids = np.array(np.meshgrid(
-            levels[0], levels[1])).T.reshape(-1, len(self.evo_params))
+        ids = np.array(np.meshgrid(levels[0], levels[1])).T.reshape(
+            -1, len(self.evo_params)
+        )
 
         data = list(evo_step.answers.values())[0]
         data = data.reshape(-1, data.shape[-1])
@@ -394,9 +416,11 @@ class EvoBench:
             labels = [x for x in self.evo_params]
             ticks = {x: set() for x in self.evo_params}
 
-            #verifier = list(self.benchmarks[0].answers)[0]
+            # verifier = list(self.benchmarks[0].answers)[0]
             verifier = self.verifier
-            ticks = np.array([list(x) for x in self.res[verifier].keys()], dtype=np.float32)
+            ticks = np.array(
+                [list(x) for x in self.res[verifier].keys()], dtype=np.float32
+            )
             data = np.array([x for x in self.res[verifier].values()], dtype=np.float32)
 
             # print(self.evo_params[0], set(sorted(np.array([list(x) for x in self.res[verifier].keys()])[:, 0].tolist())))
@@ -411,12 +435,23 @@ class EvoBench:
             pie_scatter = PieScatter2D(data)
             pie_scatter.draw_with_ticks(ticks_f1, ticks_f2, labels_f1, labels_f2)
 
-            pdf_dir = f'{self.seed_benchmark.settings.root}/figures/'
+            pdf_dir = f"{self.seed_benchmark.settings.root}/figures/"
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
-            pie_scatter.save(f'{pdf_dir}/all_{evo_step.iteration}_{evo_step.direction}.png')
+            pie_scatter.save(
+                f"{pdf_dir}/all_{evo_step.iteration}_{evo_step.direction}.png"
+            )
 
-            pie_scatter.draw_with_ticks(ticks_f1, ticks_f2, labels_f1, labels_f2, x_log_scale=True, y_log_scale=True)
-            pie_scatter.save(f'{pdf_dir}/all_log_{evo_step.iteration}_{evo_step.direction}.png')
+            pie_scatter.draw_with_ticks(
+                ticks_f1,
+                ticks_f2,
+                labels_f1,
+                labels_f2,
+                x_log_scale=True,
+                y_log_scale=True,
+            )
+            pie_scatter.save(
+                f"{pdf_dir}/all_log_{evo_step.iteration}_{evo_step.direction}.png"
+            )
 
         else:
             # plot two factors with properties: |F| >= 3

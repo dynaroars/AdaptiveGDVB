@@ -11,7 +11,7 @@ class Factor:
     end = None
     nb_levels = None
 
-    # innert attributes:
+    # inert attributes:
     # 1. defines the limitation of self
     # 2. cannot change
     type = None
@@ -28,16 +28,16 @@ class Factor:
         self.end = F(end)
         self.nb_levels = int(nb_levels)
 
-        # innert attributes
+        # inert attributes
         self.type = type
-        if self.type in ['fc', 'conv']:
-            self.min_step = F(1)/F(len(fc_conv_ids[self.type]))
+        if self.type in ["fc", "conv"]:
+            self.min_step = F(1) / F(len(fc_conv_ids[self.type]))
         self._workout()
 
     def _check_min_step(self):
         # inferred attribute
         activated = False
-        self.step = (self.end - self.start)/(self.nb_levels - 1)
+        self.step = (self.end - self.start) / (self.nb_levels - 1)
         if self.min_step and self.start < self.min_step:
             self.start = self.min_step
             activated = True
@@ -54,7 +54,9 @@ class Factor:
         self.explicit_levels = np.arange(self.start, self.end + self.step, self.step)
         if level_too_small:
             self.nb_levels = len(self.explicit_levels)
-        assert(self.nb_levels == len(self.explicit_levels)), f"{self.nb_levels} vs. {self.explicit_levels}"
+        assert self.nb_levels == len(
+            self.explicit_levels
+        ), f"{self.nb_levels} vs. {self.explicit_levels}"
 
     # scale
     def scale(self, coefficient):
@@ -83,9 +85,9 @@ class Factor:
         return self.start, self.end, self.nb_levels
 
     def __str__(self):
-        res = f'{self.type} : ['
+        res = f"{self.type} : ["
         assert len(self.explicit_levels) > 0
         for x in self.explicit_levels:
-            res += f'{x}, '
-        res = res[:-2] + ']'
+            res += f"{x}, "
+        res = res[:-2] + "]"
         return res
