@@ -86,6 +86,7 @@ class EvoBench:
                 raise ValueError(f"Unknown evolve direction: {evo_step.direction}")
 
         self.logger.info("Exploration finished successfully!")
+        print("Exploration finished successfully!")
         exit()
 
         # clean previous benchmark results for refinement phase
