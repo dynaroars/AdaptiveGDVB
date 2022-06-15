@@ -41,7 +41,7 @@ name = 'REevo_edz'
 	[train.dispatch]
 		nb_gpus = 1
 		platform = "slurm"
-		exclude = """ristretto01,ristretto02,ristretto03,ristretto04,lynx02,cheetah01,ai01"""
+		exclude = """ristretto01,ristretto02,ristretto03,ristretto04,lynx02,cheetah01,ai01,sds01,sds02"""
 		
 
 [verify]
@@ -58,5 +58,6 @@ name = 'REevo_edz'
 		platform = "slurm"
 		#reservation = "dx3yy_28"
 		nb_cpus = 6
-		nodes = ['cortado02','cortado03','cortado04','cortado05','cortado06','cortado07','cortado08','cortado09']
+		#nodes = ['cortado02','cortado03','cortado04','cortado05','cortado06','cortado07','cortado08','cortado09']
+		nodes = ['cortado05','cortado06','cortado08','cortado10']
 		task_per_node = 7
