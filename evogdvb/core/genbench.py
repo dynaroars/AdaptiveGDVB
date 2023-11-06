@@ -15,7 +15,7 @@ def gen(settings):
     )
 
     #  perform tasks
-    if settings.task == "evolutionary":
+    if settings.task == "evo":
         evo_bench = EvoBench(verification_benchmark)
         evo_bench.run()
     else:

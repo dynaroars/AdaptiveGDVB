@@ -118,9 +118,9 @@ class EvoStep:
                     shape = ()
                     for p in self.evo_params:
                         shape += (ca_configs["parameters"]["level"][p],)
-                    solved_per_verifiers[verifier] = np.zeros(shape, dtype=np.int)
+                    solved_per_verifiers[verifier] = np.zeros(shape, dtype=np.int32)
                     answers_per_verifiers[verifier] = np.empty(
-                        shape + (nb_property,), dtype=np.int
+                        shape + (nb_property,), dtype=np.int32
                     )
                 idx = tuple(indexes[x].index(problem.vpc[x]) for x in self.evo_params)
                 if problem.verification_results[verifier][0] in ["sat", "unsat"]:
