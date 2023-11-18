@@ -1,6 +1,8 @@
+import os
 import sys
 import time
 import numpy as np
+import pickle
 
 from enum import Enum, auto
 
@@ -21,14 +23,10 @@ class EvoStep:
         Both = auto()
         Up = auto()
         Down = auto()
+        Maintain = auto()
 
-    def __init__(
-        self,
-        benchmark: VerificationBenchmark,
-        evo_params: list,
-        direction: Direction,
-        iteration: int,
-    ):
+    def __init__(self, benchmark, evo_params, direction, iteration, logger):
+        self.logger = logger
         self.benchmark = benchmark
         self.evo_params = evo_params
         self.iteration = iteration
@@ -133,6 +131,41 @@ class EvoStep:
 
         self.nb_solved = solved_per_verifiers
         self.answers = answers_per_verifiers
+
+    def _get_cache_prefix(self):
+        self.logger.info("Loading verification cache ...")
+        cache_dir = os.path.join(self.benchmark.settings.root, "cache")
+        Path(cache_dir).mkdir(exist_ok=True, parents=True)
+        cache_path = os.path.join(cache_dir, f"{self.iteration}_{self.direction}")
+        return cache_path
+
+    def save_cache(self):
+        self.logger.info("Saving results cache ...")
+        cache_prefix = self._get_cache_prefix()
+        cache_solved_path = f"{cache_prefix}_solved.pkl"
+        with open(cache_solved_path, "wb") as f:
+            pickle.dump(self.nb_solved, f)
+        cache_answers_path = f"{cache_prefix}_answers.pkl"
+        with open(cache_answers_path, "wb") as f:
+            pickle.dump(self.answers, f)
+
+    def load_cache(self):
+        self.logger.info("Loading results cache ...")
+        cache_prefix = self._get_cache_prefix()
+
+        cache_solved_path = f"{cache_prefix}_solved.pkl"
+        cache_answers_path = f"{cache_prefix}_answers.pkl"
+
+        if os.path.exists(cache_solved_path) and os.path.exists(cache_answers_path):
+            cache_hit = True
+            with open(cache_solved_path, "rb") as f:
+                self.nb_solved = pickle.load(f)
+            with open(cache_answers_path, "rb") as f:
+                self.answers = pickle.load(f)
+        else:
+            cache_hit = False
+
+        return cache_hit
 
     def plot(self):
         if len(self.evo_params) == 2:

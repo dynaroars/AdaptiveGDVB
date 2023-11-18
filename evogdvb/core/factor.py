@@ -37,7 +37,12 @@ class Factor:
     def _check_min_step(self):
         # inferred attribute
         activated = False
-        self.step = (self.end - self.start) / (self.nb_levels - 1)
+        assert self.nb_levels >= 1
+        if self.nb_levels == 1:
+            self.step= 0
+        else:
+            self.step = (self.end - self.start) / (self.nb_levels - 1)
+        
         if self.min_step and self.start < self.min_step:
             self.start = self.min_step
             activated = True
