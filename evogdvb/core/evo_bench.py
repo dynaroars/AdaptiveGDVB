@@ -41,22 +41,16 @@ class EvoBench:
         self.pivots_ua = {}  # under-approximation
         self.pivots_oa = {}  # over-approximation
         self.res = {}
-        self.refine_iterations = 3
 
         for p in self.evo_params:
             self.pivots_ua[p] = None
             self.pivots_oa[p] = None
 
     def run(self):
-        initial_step = EvoStep(
-            self.seed_benchmark, self.evo_params, EvoStep.Direction.Both, 0, self.logger
-        )
-        self.benchmarks += [initial_step]
-
-        # explore
-        homework = [initial_step]
-        while homework:
-            evo_step = homework.pop(0)
+        # init explore
+        print(f'----------[Exploration]----------')
+        evo_step = self.init_explore()
+        while evo_step:
             print(f'----------[Iteration {evo_step.iteration}]----------')
             print(f'\t{evo_step.direction}, factors: {[str(x) for x in evo_step.factors]}')
             
@@ -69,399 +63,249 @@ class EvoBench:
             self.collect_res(evo_step)
             self.plot(evo_step)
             
-
+            evo_step = self.evolve(evo_step)
+            self.benchmarks += [evo_step]
             
-            
-            next_evo_step = self.evolve(evo_step, evo_step.direction)
-            if next_evo_step:
-                self.benchmarks += [next_evo_step]
-                homework += [next_evo_step]
-            '''
-            if evo_step.direction == EvoStep.Direction.Both:
-                next_evo_step = self.evolve(evo_step, EvoStep.Direction.Both)
-                if next_evo_step:
-                    self.benchmarks += [next_evo_step]
-                    homework += [next_evo_step]
+        print("EvoGDVB finished successfully!")
 
-            elif evo_step.direction == EvoStep.Direction.Up:
-                next_evo_step = self.evolve(evo_step, EvoStep.Direction.Up)
-                if next_evo_step:
-                    self.benchmarks += [next_evo_step]
-                    homework += [next_evo_step]
-                    
-            elif evo_step.direction == EvoStep.Direction.Down:
-                next_evo_step = self.evolve(evo_step, EvoStep.Direction.Down)
-                if next_evo_step:
-                    self.benchmarks += [next_evo_step]
-                    homework += [next_evo_step]
-            else:
-                raise ValueError(f"Unknown evolve direction: {evo_step.direction}")
-            '''
-
-        self.logger.info("Exploration finished successfully!")
-        print("Exploration finished successfully!")
-
-        # clean previous benchmark results for refinement phase
-        self.res = None
-        self.res_nb_solved = None
+    def evolve(self, evo_step):
         
-        
-        # refine
-        print(len(homework), homework)
-        while homework:
-            evo_step = homework.pop(0)
-            self.refine_iterations -= 1
-            if self.refine_iterations == 0:
-                next_ca_configs = None
-
-        self.logger.info("Refinement finished successfully!")
-        self.logger.info("Refinement finished successfully!")
-
-    def evolve(self, evo_step, direction: EvoStep.Direction):
-        ca_configs = evo_step.benchmark.ca_configs
-
         # A1: Exploration State
-        # 1) for all factors, check if exploration is needed
-        # 2) for all factors, check if configured bounds are reached
-        # if 1) or 2), go to A2: Refinement state
         if self.state == self.EvoState.Explore:
-            next_ca_configs = self.explore(evo_step, direction)
-            #print("NEXT CA: ", next_ca_configs)
-            goon = not self.check_same_ca_configs(ca_configs, next_ca_configs)
-
+            # update pivots in the Exploration state
+            self.update_pivots(evo_step)
+            # generate ca configs
+            next_ca_configs = self.explore(evo_step)
+            
+            print("\tUA:   ", self.pivots_ua_found(), self.pivots_ua['neu'], self.pivots_ua['fc'])
+            print("\tOA:   ", self.pivots_oa_found(), self.pivots_oa['neu'], self.pivots_oa['fc'])
+            #print('\tAct:  ', np.array(actions).flatten())
+            
+            explore_limit = self.check_same_ca_configs(evo_step.benchmark.ca_configs, next_ca_configs)
+        
+            # goto Refine if both pivots are found
+            #             or runs out of predefined exploration steps
+            if (self.pivots_oa_found() and self.pivots_ua_found()) or evo_step.iteration>=self.explore_iter or explore_limit:
+                self.state = self.EvoState.Refine
+                self.logger.info("Exploration finished successfully!")
+                print("Exploration finished successfully!")
+                print(f'----------[Refinement]----------')
+                evo_step = self.init_refine(self.benchmarks[0])
+        
         # A2 : Refinement State
-        # 1) check starting point based on observations from the exploration states
-        # 2) prune overly easy and overly hard levels
-        # 3) stop when necessary, go to analyze state
-        elif self.state == self.EvoState.Refine:
-            next_ca_configs = self.refine(evo_step)
-            goon = not self.check_same_ca_configs(ca_configs, next_ca_configs)
-        else:
-            raise ValueError(f"Unknown evolve state: {self.state}")
+        if self.state == self.EvoState.Refine:
+            if evo_step.iteration >= self.refine_iter:
+                self.logger.info("Refinement finished successfully!")
+                print("Refinement finished successfully!")
+                return None
+            else:
+                next_ca_configs = self.refine(evo_step)
 
-        if goon:
-            next_benchmark = VerificationBenchmark(
-                f"{self.benchmark_name}_{evo_step.iteration}_{evo_step.direction}",
-                self.dnn_configs,
-                next_ca_configs,
-                evo_step.benchmark.settings,
-            )
-            next_evo_step = EvoStep(
-                next_benchmark,
-                self.evo_params,
-                direction,
-                evo_step.iteration + 1,
-                self.logger,
-            )
-        else:
-            next_evo_step = None
+        next_benchmark = VerificationBenchmark(
+            f"{self.benchmark_name}_{evo_step.iteration+1}_{evo_step.direction}",
+            self.dnn_configs,
+            next_ca_configs,
+            evo_step.benchmark.settings,
+        )
+        next_evo_step = EvoStep(
+            next_benchmark,
+            self.evo_params,
+            evo_step.direction,
+            evo_step.iteration + 1,
+            self.logger,
+        )
         return next_evo_step
 
-    def explore(self, evo_step: EvoStep, direction: EvoStep.Direction):
-        actions = self.update_pivots_(evo_step, direction)
-        
-        
-        print("\tUA:   ", self.pivots_ua_found(), self.pivots_ua)
-        print("\tOA:   ", self.pivots_oa_found(), self.pivots_oa)
-        print('\tAct:  ', np.array(actions).flatten())
+    def init_explore(self):
+        initial_step = EvoStep(
+            self.seed_benchmark, self.evo_params, EvoStep.Direction.Both, 0, self.logger
+        )
+        self.benchmarks += [initial_step]
+        return initial_step
+
+    def explore(self, evo_step):
+        # compute exploration actions
+        direction = evo_step.direction
+        if self.state == self.EvoState.Explore:
+            if direction == EvoStep.Direction.Both:
+                def_rate = self.evo_configs["deflation_rate"]
+                inf_rate = self.evo_configs["inflation_rate"]
+            elif direction == EvoStep.Direction.Down:
+                def_rate = self.evo_configs["deflation_rate"]
+                inf_rate = self.evo_configs["deflation_rate"]
+            elif direction == EvoStep.Direction.Up:
+                def_rate = self.evo_configs["inflation_rate"]
+                inf_rate = self.evo_configs["inflation_rate"]
+            else:
+                assert False
+            
+            actions = np.zeros([len(self.evo_params), 2])
+            for i, f in enumerate(evo_step.evo_params):
+                if self.pivots_ua_found(f) and self.pivots_oa_found(f):
+                    actions[i][0] = 1
+                    actions[i][1] = 1
+                elif self.pivots_ua_found(f):
+                    actions[i][0] = inf_rate
+                    actions[i][1] = inf_rate
+                elif self.pivots_oa_found(f):
+                    actions[i][0] = def_rate
+                    actions[i][1] = def_rate
+                else:
+                    actions[i][0] = def_rate
+                    actions[i][1] = inf_rate
 
         ca_configs = evo_step.benchmark.ca_configs
         ca_configs_next = copy.deepcopy(ca_configs)
+        
+        parameters_lower_bounds = self.evo_configs["parameters_lower_bounds"]
+        parameters_upper_bounds = self.evo_configs["parameters_upper_bounds"]
 
-        #print(f"Evo state: {self.state}; Actions: {list(actions)}")
+        for i, f in enumerate(evo_step.factors):
+            f = copy.deepcopy(f)
+            start = f.start * F(actions[i][0])
+            end = f.end * F(actions[i][1])
 
-        #print("UA\t", self.pivots_ua)
-        #print("OA\t", self.pivots_oa)
+            # check hard bounds from evo configs
+            if f.type in parameters_lower_bounds:
+                start = max(start, F(parameters_lower_bounds[f.type]))
+            if f.type in parameters_upper_bounds:
+                end = min(end, F(parameters_upper_bounds[f.type]))
 
-        # check if no scales are needed for the entire slice
-        if all(x == 1.0 for x in actions.flatten().tolist()):
-            #print("GOTO: Refine due to same action compared to last step.")
-            self.state = self.EvoState.Refine
-        # explore
-        else:
-            parameters_lower_bounds = self.evo_configs["parameters_lower_bounds"]
-            parameters_upper_bounds = self.evo_configs["parameters_upper_bounds"]
-
-            for i, f in enumerate(evo_step.factors):
-                f = copy.deepcopy(f)
-                start = f.start * F(actions[i][0])
-                end = f.end * F(actions[i][1])
-
-                # check hard bounds from evo configs
-                if f.type in parameters_lower_bounds:
-                    start = max(start, F(parameters_lower_bounds[f.type]))
-                if f.type in parameters_upper_bounds:
-                    end = min(end, F(parameters_upper_bounds[f.type]))
-
-                # skip factor-level modification if start >= end
-                if start > end:
-                    self.logger.warn(f"START > END!!! NO MODIFICATION TO FACTOR: {f}")
-                    continue
-                
-                f.set_start_end(start, end)
-                
-                start, end, levels = f.get()
-                ca_configs_next["parameters"]["level"][f.type] = levels
-                ca_configs_next["parameters"]["range"][f.type] = [start, end]
+            # skip factor-level modification if start >= end
+            if start > end:
+                self.logger.warn(f"START > END!!! NO MODIFICATION TO FACTOR: {f}")
+                continue
+            
+            f.set_start_end(start, end)
+            
+            start, end, levels = f.get()
+            ca_configs_next["parameters"]["level"][f.type] = levels
+            ca_configs_next["parameters"]["range"][f.type] = [start, end]
         return ca_configs_next
 
 
-    def update_pivots_(
-        self, evo_step: EvoStep, direction: EvoStep.Direction, state=None,
-    ):
-        
+    def update_pivots(self, evo_step):
         solved = self.res_nb_solved[self.verifier]
         total_problems = evo_step.benchmark.ca_configs["parameters"]["level"]["prop"]
         
-        ### 1) calculate pivot of UA(under-approximation) and OA(over-approximation)
+        ### 1) calculate pivot of UA(under-approximation) 
+        candidates = []
         for i,f in enumerate(evo_step.evo_params):
-            candidates_ua = []
-            candidates_oa = []
+            can = []
             for x in solved:
-                good_ua = True
-                good_oa = True
-                
-                #pivot UA
+                good = True
                 for y in solved:
                     # doesn't care problems that are larger
                     if any([y[j]>x[j] for j in range(len(evo_step.evo_params))]):
                         pass
                     elif solved[y] != total_problems:
-                        good_ua = False 
+                        good = False 
+                if good:
+                    can += [x]
+            candidates += can
+        
+        c = np.array(candidates).reshape(-1,len(evo_step.evo_params)).tolist()
+        c = list(set([tuple(x) for x in c]))
+        
+        # SET pivot UA
+        if c:
+            cp=[np.prod(x) for x  in c]
+            
+            best_c = [x for x  in c if np.prod(x) == np.max(cp)]
+            
+            if len(best_c) >1:
+                print(f'Interesting. We have two Pivot_Us {best_c}. Using the first one: {best_c[0]}.')
+            
+            for i,f in enumerate(evo_step.evo_params):
+                self.pivots_ua[f] = best_c[0][i]
+        
+        # UNSET pivot UA
+        # this applies to deflation search
+        else:
+            for f in evo_step.evo_params:
+                self.pivots_ua[f] = None
+        
+        ### 2) calculate pivot of UA(under-approximation) 
+        ## Pivots_O is different than Pivots_U, it is one step off the over-approximation
+        for i,f in enumerate(evo_step.evo_params):
+            candidates = []
+            for x in solved:
+                good = True
                 
-                #pivot OA
                 for y in solved:
                     if y[i] >= x[i] and solved[y] != 0:
-                        good_oa = False
+                        good = False
                         
-                if good_ua:
-                    candidates_ua += [x[i]]
-                if good_oa:
-                    candidates_oa += [x[i]]
-                    
-            if candidates_ua:
-                self.pivots_ua[f] = np.max(candidates_ua)
-            else:
-                self.pivots_ua[f] = None
-            if candidates_oa:
-                self.pivots_oa[f] = np.min(candidates_oa)
+                if good:
+                    candidates += [x[i]]
+            
+            # SET pivot OA
+            if candidates:
+                self.pivots_oa[f] = np.min(candidates)
+            # UNSAT pivot OA
             else:
                 self.pivots_oa[f] = None
+
+    def init_refine(self, evo_step):
+        print('\tInitialize refinement stage.')
         
-        if direction == EvoStep.Direction.Both:
-            def_rate = self.evo_configs["deflation_rate"]
-            inf_rate = self.evo_configs["inflation_rate"]
-        elif direction == EvoStep.Direction.Down:
-            def_rate = self.evo_configs["deflation_rate"]
-            inf_rate = self.evo_configs["deflation_rate"]
-        elif direction == EvoStep.Direction.Up:
-            def_rate = self.evo_configs["inflation_rate"]
-            inf_rate = self.evo_configs["inflation_rate"]
-        else:
-            assert False
+        # clean previous benchmark results for refinement phase
+        self.res = None
+        self.res_nb_solved = None
         
-        actions = np.zeros([len(self.evo_params), 2])
-        for i, f in enumerate(evo_step.evo_params):
+        ca_configs = evo_step.benchmark.ca_configs
+        ca_configs_next = copy.deepcopy(ca_configs)
 
-            if self.pivots_ua_found(f) and self.pivots_oa_found(f):
-                actions[i][0] = 1
-                actions[i][1] = 1
-            elif self.pivots_ua_found(f):
-                actions[i][0] = inf_rate
-                actions[i][1] = inf_rate
-            elif self.pivots_oa_found(f):
-                actions[i][0] = def_rate
-                actions[i][1] = def_rate
-            else:
-                actions[i][0] = def_rate
-                actions[i][1] = inf_rate
-        return actions
-    
+        for f in evo_step.factors:
+            f = copy.deepcopy(f)
 
-    def update_pivots(
-        self, evo_step: EvoStep, direction: EvoStep.Direction, state=None
-    ):
-        # set def_rate and inf_rate
-        if direction == EvoStep.Direction.Both:
-            def_rate = self.evo_configs["deflation_rate"]
-            inf_rate = self.evo_configs["inflation_rate"]
-        elif direction == EvoStep.Direction.Down:
-            def_rate = self.evo_configs["deflation_rate"]
-            inf_rate = self.evo_configs["deflation_rate"]
-        elif direction == EvoStep.Direction.Up:
-            def_rate = self.evo_configs["inflation_rate"]
-            inf_rate = self.evo_configs["inflation_rate"]
-        else:
-            assert False
+            start = self.pivots_ua[f.type]
+            end = self.pivots_oa[f.type]
 
-        nb_property = evo_step.benchmark.ca_configs["parameters"]["level"]["prop"]
-        # nb_levels = np.array([x.nb_levels for x in evo_step.factors])
-        res = evo_step.nb_solved[self.verifier]
-        # TEST res
-        # res = np.array([[5, 5, 5], [5, 5, 1], [3, 1, 5]])
-        # res = np.array([[5, 5, 0], [5, 5, 0], [0, 0, 0]])
-        # res = np.array([[3, 0, 0], [0, 0, 0], [0, 0, 0]])
-        max_value = nb_property
-        # min_value = 0
-        #print("res", res)
+            if not start:
+                start = F(self.evo_configs["parameters_lower_bounds"][f.type])
+            if not end:
+                end = F(self.evo_configs["parameters_upper_bounds"][f.type])
+            
+            f.set_start_end(start, end)
+            start, end, levels = f.get()
+            
+            print('\t FSEL:',f.type,start, end, levels)
+            ca_configs_next["parameters"]["level"][f.type] = levels
+            ca_configs_next["parameters"]["range"][f.type] = [start, end]
 
-        max_ids = np.array(np.where(max_value == res)).T
-        ua_candidates = []
+        next_benchmark = VerificationBenchmark(
+            f"{self.benchmark_name}_{evo_step.iteration}_{EvoStep.Direction.Maintain}",
+            self.dnn_configs,
+            ca_configs_next,
+            evo_step.benchmark.settings,
+        )
+        next_evo_step = EvoStep(
+            next_benchmark,
+            self.evo_params,
+            EvoStep.Direction.Maintain,
+            0,
+            self.logger,
+        )
 
-        # Estimate verification boundary under-approximation
-        for max_id in max_ids:
-            ids = np.array(list(np.ndindex(*(max_id + 1))))
+        return next_evo_step
 
-            issubset = True
-            for x in ids:
-                if x.tolist() not in max_ids.tolist():
-                    issubset = False
-                    break
+    def refine(self, evo_step):
+        ca_configs = evo_step.benchmark.ca_configs
+        ca_configs_next = copy.deepcopy(ca_configs)
+        arity = self.evo_configs["refine_arity"]
 
-            # print('Subject:', max_id, 'Result:', issubset)
-            if issubset:
-                ua_candidates += [max_id]
+        for f in evo_step.factors:
+            f = copy.deepcopy(f)
+            f.subdivision(arity)
 
-        # expand lower
-        if len(ua_candidates) == 0:
-            pivot_ua_id = None
-        # pivot lb found
-        else:
-            levels = np.array([x.explicit_levels for x in evo_step.factors], dtype=F)
-
-            ua_candidates_real_level = []
-            for mc in ua_candidates:
-                temp = []
-                for d_i, x in enumerate(mc):
-                    temp += [levels[d_i][x]]
-                ua_candidates_real_level += [np.array(temp)]
-            ua_candidates_real_level_prod = [
-                np.prod(x) for x in ua_candidates_real_level
-            ]
-            #print(ua_candidates_real_level)
-            #print(ua_candidates_real_level_prod)
-            pivot_ua_id = np.argmax(ua_candidates_real_level_prod)
-            #print(pivot_ua_id)
-            # for i, x in enumerate(ua_candidates_real_level[pivot_ua_id]):
-            #    print(i, x)
-        #print(pivot_ua_id)
-        lb_cuts = []
-        ub_cuts = []
-        # max_cut & min_cut
-        for i, f in enumerate(evo_step.factors):
-            axes = list(range(len(self.evo_params)))
-            axes.remove(i)
-            axes = [i] + axes
-            raw = res.transpose(axes)
-
-            lb_cut = [np.all(x == nb_property) for x in raw]
-            # print('1', lb_cut)
-            lb_cut = lb_cut.index(True) if True in lb_cut else None
-            # print('2', lb_cut)
-            lb_cuts += [lb_cut]
-
-            ub_cut = [np.all(x == 0) for x in reversed(raw)]
-            #print("1)", ub_cut)
-
-            # ub_cut = ub_cut.index(True) if True in ub_cut else None
-            ub_cut = ub_cut.index(False) - 1 if False in ub_cut else f.nb_levels - 1
-            ub_cut = None if ub_cut == -1 else ub_cut
-            #print("2)", ub_cut)
-            ub_cuts += [ub_cut]
-
-            #print(f"[{f.type}] lb_cut: {lb_cut}; ub_cut: {ub_cut}.")
-
-        actions = np.zeros([len(self.evo_params), 2])
-        for i, f in enumerate(evo_step.factors):
-
-            if direction == EvoStep.Direction.Both:
-                # update under-approximation pivot
-                # ua pivot not found: scale down
-                if pivot_ua_id is None:
-                    actions[i][0] = def_rate
-                # ua pivot found: check if ua pivot on border
-                else:
-                    # update ua pivot
-                    if self.pivots_ua[f.type] is None:
-                        self.pivots_ua[f.type] = ua_candidates_real_level[pivot_ua_id][
-                            i
-                        ]
-                    else:
-                        self.pivots_ua[f.type] = max(
-                            self.pivots_ua[f.type],
-                            ua_candidates_real_level[pivot_ua_id][i],
-                        )
-
-                    # T: ua pivot too small -> scale up
-                    if lb_cuts[i] is not None:
-                        actions[i][0] = inf_rate
-                    # F: ua pivot not too small -> don't scale
-                    else:
-                        actions[i][0] = 1
-
-                # update over-approximation pivot
-                # oa pivot not found: scale up
-                if ub_cuts[i] is None:
-                    actions[i][1] = inf_rate
-                # oa pivot found: check if oa pivot on border
-                else:
-                    # update oa pivot
-                    if self.pivots_oa[f.type] is None:
-                        #print(f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]])
-                        self.pivots_oa[f.type] = f.explicit_levels[
-                            f.nb_levels - 1 - ub_cuts[i]
-                        ]
-                    else:
-                        assert False
-                        self.pivots_oa[f.type] = min(
-                            self.pivots_oa[f.type],
-                            f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]],
-                        )
-                    # T: oa pivot too large -> scale down
-                    if ub_cuts[i] + 1 == f.nb_levels:
-                        actions[i][1] = def_rate
-                    # F: oa pivot not too large -> don't scale
-                    else:
-                        actions[i][1] = 1
-
-            elif direction == EvoStep.Direction.Up:
-                if ub_cuts[i] is None:
-                    actions[i][0] = inf_rate  # patch lb
-                    actions[i][1] = inf_rate  # patch ub
-                # oa pivot found: check if oa pivot on border
-                else:
-                    # update oa pivot
-                    if self.pivots_oa[f.type] is None:
-                        # print(
-                        #   "Settings Pivot OA:",
-                        #    f.nb_levels,
-                        #    ub_cuts[i],
-                        #    f.explicit_levels,
-                        #    f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]],
-                        #)
-                        self.pivots_oa[f.type] = f.explicit_levels[
-                            f.nb_levels - 1 - ub_cuts[i]
-                        ]
-                    else:
-                        #print(
-                        #    "Updating Pivot OA:",
-                        #    f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]],
-                        #)
-                        self.pivots_oa[f.type] = f.explicit_levels[
-                            f.nb_levels - 1 - ub_cuts[i]
-                        ]
-                        # self.pivots_oa[f.type] = min(
-                        #    self.pivots_oa[f.type],
-                        #    f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]],
-                        # )
-                    # stop right here
-                    actions[i][0] = 1
-                    actions[i][1] = 1
-            elif direction == EvoStep.Direction.Down:
-                pass
-            else:
-                assert False
-        return actions
+            start, end, levels = f.get()
+            print('\t FSEL:',f.type,start, end, levels)
+            
+            ca_configs_next["parameters"]["level"][f.type] = levels
+            ca_configs_next["parameters"]["range"][f.type] = [start, end]
+        return ca_configs_next
+        
 
     def pivots_oa_found(self, f=None):
         if f:
@@ -476,190 +320,6 @@ class EvoBench:
         else:
             found = all([self.pivots_ua[x] is not None for x in self.pivots_ua])
         return found
-
-    def update_pivots_bi_direction(self, evo_step):
-        nb_property = evo_step.benchmark.ca_configs["parameters"]["level"]["prop"]
-        # nb_levels = np.array([x.nb_levels for x in evo_step.factors])
-        res = evo_step.nb_solved[self.verifier]
-        # TEST res
-        # res = np.array([[5,5,5],[5,5,1],[3,1,5]])
-        max_value = nb_property
-        # min_value = 0
-        #print(res)
-
-        max_ids = np.array(np.where(max_value == res)).T
-        ua_candidates = []
-
-        # Estimate verification boundary under-approximation
-        for max_id in max_ids:
-            ids = np.array(list(np.ndindex(*(max_id + 1))))
-
-            issubset = True
-            for x in ids:
-                if x.tolist() not in max_ids.tolist():
-                    issubset = False
-                    break
-
-            # print('Subject:', max_id, 'Result:', issubset)
-            if issubset:
-                ua_candidates += [max_id]
-
-        # expand lower
-        if len(ua_candidates) == 0:
-            pivot_ua_id = None
-        # pivot lb found
-        else:
-            levels = np.array([x.explicit_levels for x in evo_step.factors], dtype=F)
-
-            ua_candidates_real_level = []
-            for mc in ua_candidates:
-                temp = []
-                for d_i, x in enumerate(mc):
-                    temp += [levels[d_i][x]]
-                ua_candidates_real_level += [np.array(temp)]
-            ua_candidates_real_level_prod = [
-                np.prod(x) for x in ua_candidates_real_level
-            ]
-            #print(ua_candidates_real_level)
-            #print(ua_candidates_real_level_prod)
-            pivot_ua_id = np.argmax(ua_candidates_real_level_prod)
-            #print(pivot_ua_id)
-            # for i, x in enumerate(ua_candidates_real_level[pivot_ua_id]):
-            #    print(i, x)
-
-        lb_cuts = []
-        ub_cuts = []
-        # max_cut & min_cut
-        for i, f in enumerate(evo_step.factors):
-            axes = list(range(len(self.evo_params)))
-            axes.remove(i)
-            axes = [i] + axes
-            raw = res.transpose(axes)
-
-            lb_cut = [np.all(x == nb_property) for x in raw]
-            #print(lb_cut)
-            lb_cut = lb_cut.index(True) if True in lb_cut else None
-            #print(lb_cut)
-            lb_cuts += [lb_cut]
-            ub_cut = [np.all(x == 0) for x in reversed(raw)]
-            #print(ub_cut)
-            ub_cut = ub_cut.index(True) if True in ub_cut else None
-            #print(ub_cut)
-            ub_cuts += [ub_cut]
-
-            #print(f"[{f.type}] lb_cut: {lb_cut}; ub_cut: {ub_cut}.")
-
-        actions = np.zeros([len(self.evo_params), 2])
-        for i, f in enumerate(evo_step.factors):
-
-            # update under-approximation pivot
-            # ua pivot not found: scale down
-            if pivot_ua_id is None:
-                actions[i][0] = self.evo_configs["deflation_rate"]
-            # ua pivot found: check if ua pivot on border
-            else:
-                # update ua pivot
-                if self.pivots_ua[f.type] is None:
-                    self.pivots_ua[f.type] = ua_candidates_real_level[pivot_ua_id][i]
-                else:
-                    self.pivots_ua[f.type] = max(
-                        self.pivots_ua[f.type], ua_candidates_real_level[pivot_ua_id][i]
-                    )
-
-                # T: ua pivot too small -> scale up
-                if lb_cuts[i] is not None:
-                    actions[i][0] = self.evo_configs["inflation_rate"]
-                # F: ua pivot not too small -> don't scale
-                else:
-                    actions[i][0] = 1
-
-            # update over-approximation pivot
-            # oa pivot not found: scale up
-            if ub_cuts[i] is None:
-                actions[i][1] = self.evo_configs["inflation_rate"]
-            # oa pivot found: check if oa pivot on border
-            else:
-                # update oa pivot
-                if self.pivots_oa[f.type] is None:
-                    print(f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]])
-                    self.pivots_oa[f.type] = f.explicit_levels[
-                        f.nb_levels - 1 - ub_cuts[i]
-                    ]
-                else:
-                    self.pivots_oa[f.type] = min(
-                        self.pivots_oa[f.type],
-                        f.explicit_levels[f.nb_levels - 1 - ub_cuts[i]],
-                    )
-                # T: oa pivot too large -> scale down
-                if ub_cuts[i] + 1 == f.nb_levels:
-                    actions[i][1] = self.evo_configs["deflation_rate"]
-                # F: oa pivot not too large -> don't scale
-                else:
-                    actions[i][1] = 1
-
-        return actions
-
-    def refine(self, evo_step):
-        ca_configs = evo_step.benchmark.ca_configs
-        ca_configs_next = copy.deepcopy(ca_configs)
-        arity = self.evo_configs["refine_arity"]
-
-        for i, f in enumerate(evo_step.factors):
-            f = copy.deepcopy(f)
-
-            start = self.pivots_ua[f.type]
-            end = self.pivots_oa[f.type]
-
-            if start is None or end is None:
-                raw = self.res_nb_solved[list(self.res_nb_solved)[0]]
-                all_levels = set(x[i] for x in raw)
-                min_level = min(all_levels)
-                max_level = max(all_levels)
-
-                print(all_levels, min_level, max_level)
-
-                pivot_min_candidates = [min_level]
-                pivot_max_candidates = [max_level]
-                for l in all_levels:
-                    min_pass = True
-                    max_pass = True
-                    for x in raw:
-                        if x[i] <= l:
-                            if (
-                                raw[x] == ca_configs["parameters"]["level"]["prop"]
-                                or raw[x] >= x[i]
-                            ):
-                                min_pass = False
-                        if x[i] >= l:
-                            if raw[x] != 0:
-                                max_pass = False
-
-                    if min_pass:
-                        pivot_min_candidates += [l]
-                    if max_pass:
-                        pivot_max_candidates += [l]
-
-                print("pivot_min_candidates: ", pivot_min_candidates)
-                print("pivot_max_candidates: ", pivot_max_candidates)
-
-                if start is None:
-                    start = max(pivot_min_candidates)
-                if end is None:
-                    end = min(pivot_max_candidates)
-            print(start)
-            print(end)
-            assert (
-                start is not None and end is not None and start <= end
-            ), f"!Wrong start/end. Start: {start}, End: {end}"
-
-            f.set_start_end(start, end)
-            f.subdivision(arity)
-
-            start, end, levels = f.get()
-            ca_configs_next["parameters"]["level"][f.type] = levels
-            ca_configs_next["parameters"]["range"][f.type] = [start, end]
-
-        return ca_configs_next
 
     def check_same_ca_configs(self, this, that):
         res = []
@@ -741,7 +401,7 @@ class EvoBench:
             pdf_dir = f"{self.seed_benchmark.settings.root}/figures/"
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
             pie_scatter.save(
-                f"{pdf_dir}/all_{evo_step.iteration}_{evo_step.direction}.png"
+                f"{pdf_dir}/all_{self.state}_{evo_step.iteration}_{evo_step.direction}.png"
             )
 
             pie_scatter.draw_with_ticks(
@@ -753,7 +413,7 @@ class EvoBench:
                 y_log_scale=True,
             )
             pie_scatter.save(
-                f"{pdf_dir}/all_log_{evo_step.iteration}_{evo_step.direction}.png"
+                f"{pdf_dir}/all_log_{self.state}_{evo_step.iteration}_{evo_step.direction}.png"
             )
 
         else:

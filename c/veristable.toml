@@ -1,4 +1,4 @@
-name = 'REevo_abcrown'
+name = 'NV'
 
 [dnn]
 	artifact = 'MNIST'
@@ -42,7 +42,7 @@ name = 'REevo_abcrown'
 		nb_cpus = 8
 		nb_gpus = 1
 		platform = "slurm"
-		exclude = """cheetah01,ristretto01,sds01,sds02"""
+		exclude = """adriatic01,adriatic02,adriatic03,adriatic04,adriatic05,adriatic06,cheetah01,cheetah02,cheetah05,jaguar05,jaguar06,lynx03,lynx10,ristretto01,sds01,sds02"""
 
 [verify]
 	debug = true
@@ -55,11 +55,11 @@ name = 'REevo_abcrown'
 		# DNNV = ['eran_deepzono']
 		# DNNV = ['eran_deeppoly','neurify','nnenum']
 		# DNNF = ['default']
-		SwarmHost = ['abcrown']
+		SwarmHost = ['veristable']
 
 	[verify.dispatch]
 		platform = "slurm"
-		nb_cpus = 1
+		nb_cpus = 6
 		#partition='main'
 		#nodes = ['cortado04','cortado05','cortado06','cortado07','cortado10']
 		partition='nolim'

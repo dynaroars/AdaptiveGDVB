@@ -39,7 +39,7 @@ class Factor:
         activated = False
         assert self.nb_levels >= 1
         if self.nb_levels == 1:
-            self.step= 0
+            self.step = 0
         else:
             self.step = (self.end - self.start) / (self.nb_levels - 1)
         

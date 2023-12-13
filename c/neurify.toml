@@ -1,4 +1,4 @@
-name = 'REevo_abcrown'
+name = 'REevo_neurify'
 
 [dnn]
 	artifact = 'MNIST'
@@ -43,25 +43,24 @@ name = 'REevo_abcrown'
 		nb_gpus = 1
 		platform = "slurm"
 		exclude = """cheetah01,ristretto01,sds01,sds02"""
+		
 
 [verify]
 	debug = true
 	eps = 0.015
 	time = 60
 	memory = '16G'
-	setup_cmds = ['export MKL_SERVICE_FORCE_INTEL=1']
-
 	[verify.verifiers]
-		# DNNV = ['eran_deepzono']
+		DNNV = ['neurify']
 		# DNNV = ['eran_deeppoly','neurify','nnenum']
 		# DNNF = ['default']
-		SwarmHost = ['abcrown']
 
 	[verify.dispatch]
 		platform = "slurm"
+		#reservation = "dx3yy_28"
 		nb_cpus = 1
 		#partition='main'
 		#nodes = ['cortado04','cortado05','cortado06','cortado07','cortado10']
-		partition='nolim'
+		partition = 'nolim'
 		nodes = ['doppio02','doppio03','doppio04','doppio05']
 		task_per_node = 7

@@ -10,7 +10,8 @@
 .vscode
 /backup
 /log
-
+.venv*
+out.txt
 ## https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,4 +1,4 @@
-name = 'REevo_abcrown'
+name = 'NV'
 
 [dnn]
 	artifact = 'MNIST'
@@ -55,11 +55,11 @@ name = 'REevo_abcrown'
 		# DNNV = ['eran_deepzono']
 		# DNNV = ['eran_deeppoly','neurify','nnenum']
 		# DNNF = ['default']
-		SwarmHost = ['abcrown']
+		SwarmHost = ['neuralsat']
 
 	[verify.dispatch]
 		platform = "slurm"
-		nb_cpus = 1
+		nb_cpus = 6
 		#partition='main'
 		#nodes = ['cortado04','cortado05','cortado06','cortado07','cortado10']
 		partition='nolim'
