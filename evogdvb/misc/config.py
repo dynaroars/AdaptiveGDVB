@@ -50,6 +50,7 @@ class Settings:
             "props",
             "veri_log",
             "veri_config",
+            "cas",
         ]
         if configs["train"]["dispatch"]["platform"] == "slurm":
             self.sub_dirs += ["dis_slurm"]
@@ -63,6 +64,7 @@ class Settings:
             "timeout": 4,
             "memout": 4,
             "error": 5,
+            "hardware_limit": 6
         }
         self._make_dirs()
 

@@ -15,7 +15,7 @@ from .factor import Factor
 from gdvb.core.verification_benchmark import VerificationBenchmark
 from gdvb.plot.pie_scatter import PieScatter2D
 
-TIME_BREAK = 10
+TIME_BREAK = 1
 
 
 class EvoStep:
@@ -33,6 +33,10 @@ class EvoStep:
         self.direction = direction
         self.nb_solved = None
         self.answers = None
+        # TODO: only support one verifier at a time
+        self.verifier = list(
+            benchmark.settings.verification_configs["verifiers"].values()
+        )[0][0]
         self.factors = self._gen_factors()
 
     def _gen_factors(self):
@@ -134,7 +138,7 @@ class EvoStep:
 
     def _get_cache_prefix(self):
         self.logger.info("Loading verification cache ...")
-        cache_dir = os.path.join(self.benchmark.settings.root, "cache")
+        cache_dir = os.path.join(self.benchmark.settings.root, f"cache_{self.verifier}")
         Path(cache_dir).mkdir(exist_ok=True, parents=True)
         cache_path = os.path.join(cache_dir, f"{self.iteration}_{self.direction}")
         return cache_path

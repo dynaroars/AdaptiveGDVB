@@ -35,3 +35,6 @@ export MKL_SERVICE_FORCE_INTEL=1
 
 #export train_nodes_exclude="""cheetah01,ai01,sds01,sds02,lynx10,lynx12"""
 #export verify_nodes="cortado03,cortado04,cortado05,cortado06,cortado07,cortado08,cortado09,cortado10"
+
+alias rmca='rm -rf results/*/ca*'
+alias rmfg='rm -rf results/*/figures*'

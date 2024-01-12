@@ -403,8 +403,8 @@ class EvoBench:
 
             pie_scatter = PieScatter2D(data)
             pie_scatter.draw_with_ticks(ticks_f1, ticks_f2, labels_f1, labels_f2)
-
-            pdf_dir = f"{self.seed_benchmark.settings.root}/figures/"
+            
+            pdf_dir = f"{self.seed_benchmark.settings.root}/figures_{verifier}/"
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
             pie_scatter.save(
                 f"{pdf_dir}/all_{self.state}_{evo_step.iteration}_{evo_step.direction}.png"
