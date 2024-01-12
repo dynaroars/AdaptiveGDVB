@@ -205,7 +205,7 @@ class EvoBench:
                 good = True
                 for y in solved:
                     # doesn't care problems that are larger
-                    if any([y[j] > x[j] for j in range(len(evo_step.evo_params))]):
+                    if all([y[j] > x[j] for j in range(len(evo_step.evo_params))]):
                         pass
                     elif solved[y] != total_problems:
                         good = False
@@ -403,7 +403,7 @@ class EvoBench:
 
             pie_scatter = PieScatter2D(data)
             pie_scatter.draw_with_ticks(ticks_f1, ticks_f2, labels_f1, labels_f2)
-            
+
             pdf_dir = f"{self.seed_benchmark.settings.root}/figures_{verifier}/"
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
             pie_scatter.save(

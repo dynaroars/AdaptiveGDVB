@@ -23,7 +23,7 @@ name = 'CIFAR'
 
 [evolutionary]
 	explore_iterations = 10
-	refine_iterations = 2
+	refine_iterations = 1
 	refine_arity = 2
 
 	inflation_rate = 2
@@ -68,5 +68,6 @@ name = 'CIFAR'
 		task_per_node = 8
 		
 		partition='main'
+		exclude = """affogato01,affogato02,affogato03,affogato04,affogato05,affogato06,affogato07,affogato08,affogato09,affogato10,cortado01,cortado02,cortado03,hydro,lynx08,lynx09,optane01,panther01,puma01,slurm1,slurm2,slurm3,slurm4,slurm5"""
 		reservation='dx3yy_30'
 		nodes = ['cortado04','cortado05','cortado06','cortado07','cortado08','cortado09','cortado10']
