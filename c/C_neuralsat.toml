@@ -45,7 +45,7 @@ name = 'CIFAR'
 		#partition = "gpu"
 		#exclude = """cheetah01,cheetah02,cheetah03,cheetah04,cheetah05,ristretto01,sds01,sds02,lotus,adriatic01,adriatic02,adriatic03,adriatic04,adriatic05,adriatic06,jaguar01,jaguar02,jaguar03,jaguar04,jaguar05,jaguar06"""
 		partition = "gnolim"
-		exclude = """jinx01,jinx02,titanx01,titanx02,titanx03,titanx04,titanx05,serval01,cheetah05"""
+		exclude = """jinx01,jinx02,titanx01,titanx02,titanx03,titanx04,serval01,cheetah05"""
 
 [verify]
 	debug = true
