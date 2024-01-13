@@ -25,10 +25,19 @@ class EvoStep:
         Down = auto()
         Maintain = auto()
 
-    def __init__(self, benchmark, evo_params, direction, iteration, logger):
+    def __init__(
+        self,
+        benchmark,
+        evo_params,
+        direction,
+        iteration,
+        logger,
+        critical_region_analysis,
+    ):
         self.logger = logger
         self.benchmark = benchmark
         self.evo_params = evo_params
+        self.critical_region_analysis = critical_region_analysis
         self.iteration = iteration
         self.direction = direction
         self.nb_solved = None
@@ -74,6 +83,10 @@ class EvoStep:
 
         # analyze training results
         self.benchmark.analyze_training()
+
+        # execute critical region analysis
+        if self.critical_region_analysis:
+            self.benchmark.critical_region_analysis()
 
         # launch verification jobs
         self.benchmark.verify()

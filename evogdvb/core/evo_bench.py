@@ -32,6 +32,8 @@ class EvoBench:
         self.evo_params = self.evo_configs["parameters"]
         self.explore_iter = self.evo_configs["explore_iterations"]
         self.refine_iter = self.evo_configs["refine_iterations"]
+        self.explore_cra = self.evo_configs["explore_cra"]
+        self.refine_cra = self.evo_configs["refine_cra"]
         assert len(self.evo_params) == 2
         self._init_parameters()
 
@@ -117,18 +119,30 @@ class EvoBench:
             next_ca_configs,
             evo_step.benchmark.settings,
         )
+        if self.state == self.EvoState.Explore:
+            cra = self.explore_cra
+        elif self.state == self.EvoState.Refine:
+            cra = self.refine_cra
+        else:
+            assert False
         next_evo_step = EvoStep(
             next_benchmark,
             self.evo_params,
             evo_step.direction,
             evo_step.iteration + 1,
             self.logger,
+            cra,
         )
         return next_evo_step
 
     def init_explore(self):
         initial_step = EvoStep(
-            self.seed_benchmark, self.evo_params, EvoStep.Direction.Both, 0, self.logger
+            self.seed_benchmark,
+            self.evo_params,
+            EvoStep.Direction.Both,
+            0,
+            self.logger,
+            self.explore_cra,
         )
         self.benchmarks += [initial_step]
         return initial_step
@@ -297,6 +311,7 @@ class EvoBench:
             EvoStep.Direction.Maintain,
             0,
             self.logger,
+            self.refine_cra,
         )
 
         return next_evo_step
