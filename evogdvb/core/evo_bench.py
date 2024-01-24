@@ -32,8 +32,8 @@ class EvoBench:
         self.evo_params = self.evo_configs["parameters"]
         self.explore_iter = self.evo_configs["explore_iterations"]
         self.refine_iter = self.evo_configs["refine_iterations"]
-        self.explore_cra = self.evo_configs["explore_cra"]
-        self.refine_cra = self.evo_configs["refine_cra"]
+        self.explore_cra = self.evo_configs["explore_cra"] if "explore_cra" in self.evo_configs else False
+        self.refine_cra = self.evo_configs["refine_cra"] if "refine_cra" in self.evo_configs else False
         assert len(self.evo_params) == 2
         self._init_parameters()
 
@@ -320,7 +320,7 @@ class EvoBench:
         ca_configs = evo_step.benchmark.ca_configs
         ca_configs_next = copy.deepcopy(ca_configs)
         arity = self.evo_configs["refine_arity"]
-
+        
         for f in evo_step.factors:
             f = copy.deepcopy(f)
             f.subdivision(arity)
@@ -370,7 +370,8 @@ class EvoBench:
 
         levels = tuple(f.explicit_levels for f in evo_step.factors)
 
-        # TODO : WTF???? how to separate ndarray _,_ = np.xxx(x)???
+        # TODO : switch to pandas 
+        # ???? how to separate ndarray _,_ = np.xxx(x)???
         ids = np.array(np.meshgrid(levels[0], levels[1])).T.reshape(
             -1, len(self.evo_params)
         )
@@ -415,7 +416,7 @@ class EvoBench:
 
             labels_f1 = labels[0]
             labels_f2 = labels[1]
-
+            
             pie_scatter = PieScatter2D(data)
             pie_scatter.draw_with_ticks(ticks_f1, ticks_f2, labels_f1, labels_f2)
 
@@ -436,6 +437,15 @@ class EvoBench:
             pie_scatter.save(
                 f"{pdf_dir}/all_log_{self.state}_{evo_step.iteration}_{evo_step.direction}.png"
             )
+            
+            if self.verifier == 'neurify' and self.explore_iter == 0:
+
+                pie_scatter = PieScatter2D(evo_step.times[verifier])
+                pie_scatter.heatmap( ticks_f1, ticks_f2, labels_f1, labels_f2)
+                
+                pie_scatter.save(
+                    f"{pdf_dir}/hm_{self.state}_{evo_step.iteration}_{evo_step.direction}.png"
+                )
 
         else:
             # plot two factors with properties: |F| >= 3

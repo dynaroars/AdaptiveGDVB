@@ -1,0 +1,63 @@
+name = 'MNIST'
+
+[dnn]
+	artifact = 'MNIST'
+	onnx = './configs/networks/mnist_3x1024.onnx'
+	r4v_config = './configs/networks/mnist_3x1024.toml'
+	supported_layers= ['Conv', 'FC', 'Transpose', 'Flatten']
+	start_layer = 0
+
+[ca]
+	strength = 3
+
+	[ca.parameters]
+		[ca.parameters.level]
+			neu = 3
+			fc = 3
+			prop = 5
+
+		[ca.parameters.range]
+			neu = ['1/3', '1']
+			fc = ['1/3', '1']
+			prop = [0, 4]
+
+[evolutionary]
+	explore_iterations = 10
+	refine_iterations = 1
+	refine_arity = 2
+
+	inflation_rate = 2
+	deflation_rate = 0.5
+
+	parameters = ['neu', 'fc']
+	parameters_lower_bounds = {'fc'='1/3', 'neu'='1/3'}
+	parameters_upper_bounds = {'fc'='128/3', 'neu'='24'}
+
+[train]
+	epochs = 10
+	drop_scheme = 'random'
+	add_scheme = 'last_same_relu'
+
+	[train.dispatch]
+		nb_cpus = 8
+		nb_gpus = 1
+		platform = "slurm"
+		partition = "gnolim"
+		exclude = """jinx01,jinx02,titanx01,titanx02,titanx03,titanx04,titanx05,serval01,cheetah05"""
+
+[verify]
+	debug = true
+	eps = 0.02
+	time = 600
+	memory = '16G'
+	setup_cmds = ['export MKL_SERVICE_FORCE_INTEL=1']
+
+	[verify.verifiers]
+		SwarmHost = ['neuralsatpp']
+
+	[verify.dispatch]
+		platform = "slurm"
+		nb_cpus = 6
+		task_per_node = 8
+		partition='main'
+		exclude = """affogato01,affogato02,affogato03,affogato04,affogato05,affogato06,affogato07,affogato08,affogato09,affogato10,cortado01,cortado02,cortado03,hydro,lynx08,lynx09,optane01,panther01,puma01,slurm1,slurm2,slurm3,slurm4,slurm5"""
