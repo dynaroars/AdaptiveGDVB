@@ -29,7 +29,7 @@ for i in "$@"; do
   esac
 done
 
-for x in c1/*toml
+for x in cf/*toml
 do
     echo "Executing $x"
   if [ "$verbose" == "debug" ]; then
@@ -40,7 +40,7 @@ do
   else
     postfix=""
   fi
-  cmd="python -m evogdvb $x evo $postfix"
+  cmd="python -m adagdvb $x $postfix"
   echo $cmd
   $cmd
   if [ "$auto_mode" == false ]; then

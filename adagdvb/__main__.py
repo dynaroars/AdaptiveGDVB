@@ -8,7 +8,7 @@ def main():
     args = cli.parse_args()
     configs = config.configure(args)
     logging.initialize(configs)
-    genbench.gen(configs)
+    genbench.generate(configs)
 
 
 if __name__ == "__main__":

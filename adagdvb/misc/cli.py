@@ -4,17 +4,15 @@ from pyfiglet import Figlet
 
 def parse_args():
     f = Figlet(font="slant")
-    print(f.renderText("EvoGDVB"), end="")
+    print(f.renderText("AdaGDVB"), end="")
 
     parser = argparse.ArgumentParser(
-        description="Evolutionary Generative Diverse DNN Verification Benchmarks",
-        prog="EvoGDVB",
+        description="Adaptive Generative Diverse DNN Verification Benchmarks",
+        prog="AdaGDVB",
     )
 
     parser.add_argument("configs", type=str, help="Configurations file.")
-    parser.add_argument(
-        "task", type=str, choices=["evo"], help="Select tasks to perform."
-    )
+    # parser.add_argument("task", type=str, choices=["evo"], help="Select tasks to perform.")
     parser.add_argument("--seed", type=int, default=0, help="Random seed.")
     parser.add_argument(
         "--result_dir", type=str, default="./results/", help="Root directory."

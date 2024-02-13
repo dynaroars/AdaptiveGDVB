@@ -16,10 +16,14 @@ EvoGDVB builds on [GDVB](https://link.springer.com/chapter/10.1007/978-3-030-532
 ## Inputs
 
 ## Installation
-1. Acquire GDVB.
-2. Acquire R4V.
-3. Acquire DNNV.
-3. (Optional) Acquire DNNV_WB.
+1. Install Anaconda/miniconda.
+
+2. Install AdaGDVB
+`conda env create -n octopus -f .env.d/octopus.yml`
+2. Acquire GDVB.
+3. Acquire R4V.
+4. Acquire DNNV.
+5. (Optional) Acquire DNNV_WB.
 
 ## Usage - Toy Example
 

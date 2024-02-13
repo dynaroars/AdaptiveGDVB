@@ -23,7 +23,7 @@ name = 'MNIST'
 
 [evolutionary]
 	explore_iterations = 10
-	refine_iterations = 1
+	refine_iterations = 2
 	refine_arity = 2
 
 	inflation_rate = 2

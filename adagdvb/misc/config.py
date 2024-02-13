@@ -10,7 +10,6 @@ def configure(args):
 
     configs["root"] = os.path.join(args.result_dir, f'{configs["name"]}.{args.seed}')
     configs["seed"] = args.seed
-    configs["task"] = args.task
     configs["override"] = args.override
     if args.debug:
         configs["logging_level"] = logging.DEBUG
@@ -30,7 +29,6 @@ class Settings:
         self.name = configs["name"]
         self.root = configs["root"]
         self.seed = configs["seed"]
-        self.task = configs["task"]
         self.logging_level = configs["logging_level"]
         self.override = configs["override"]
 
@@ -64,7 +62,7 @@ class Settings:
             "timeout": 4,
             "memout": 4,
             "error": 5,
-            "hardware_limit": 6
+            "hardware_limit": 6,
         }
         self._make_dirs()
 

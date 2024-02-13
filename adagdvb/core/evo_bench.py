@@ -32,8 +32,16 @@ class EvoBench:
         self.evo_params = self.evo_configs["parameters"]
         self.explore_iter = self.evo_configs["explore_iterations"]
         self.refine_iter = self.evo_configs["refine_iterations"]
-        self.explore_cra = self.evo_configs["explore_cra"] if "explore_cra" in self.evo_configs else False
-        self.refine_cra = self.evo_configs["refine_cra"] if "refine_cra" in self.evo_configs else False
+        self.explore_cra = (
+            self.evo_configs["explore_cra"]
+            if "explore_cra" in self.evo_configs
+            else False
+        )
+        self.refine_cra = (
+            self.evo_configs["refine_cra"]
+            if "refine_cra" in self.evo_configs
+            else False
+        )
         assert len(self.evo_params) == 2
         self._init_parameters()
 
@@ -320,7 +328,7 @@ class EvoBench:
         ca_configs = evo_step.benchmark.ca_configs
         ca_configs_next = copy.deepcopy(ca_configs)
         arity = self.evo_configs["refine_arity"]
-        
+
         for f in evo_step.factors:
             f = copy.deepcopy(f)
             f.subdivision(arity)
@@ -364,13 +372,14 @@ class EvoBench:
         return all(x for x in res)
 
     def collect_res(self, evo_step):
-        if not self.res:
+        if not self.res or self.state == self.EvoState.Refine:
             self.res = {v: {} for v in evo_step.answers}
             self.res_nb_solved = {v: {} for v in evo_step.answers}
+            self.times = {v: {} for v in evo_step.times}
 
         levels = tuple(f.explicit_levels for f in evo_step.factors)
 
-        # TODO : switch to pandas 
+        # TODO : switch to pandas
         # ???? how to separate ndarray _,_ = np.xxx(x)???
         ids = np.array(np.meshgrid(levels[0], levels[1])).T.reshape(
             -1, len(self.evo_params)
@@ -382,11 +391,15 @@ class EvoBench:
         data2 = list(evo_step.nb_solved.values())[0]
         data2 = data2.reshape(-1, 1)
 
+        data3 = list(evo_step.times.values())[0]
+        data3 = data3.reshape(-1, 1)
+
         # verifier = list(evo_step.answers)[0]
         verifier = self.verifier
         for i, x in enumerate(ids):
             self.res[verifier][tuple(x)] = data[i]
             self.res_nb_solved[verifier][tuple(x)] = data2[i]
+            self.times[verifier][tuple(x)] = data3[i]
 
     # plot two factors with properties: |F| = 3
     # TODO: update plotter to accept more than two factors
@@ -408,6 +421,11 @@ class EvoBench:
             )
             data = np.array([x for x in self.res[verifier].values()], dtype=np.float32)
 
+            data2 = np.array(
+                [x for x in self.times[verifier].values()], dtype=np.float32
+            )
+            print(len(data2), np.sum(data2))
+
             # print(self.evo_params[0], set(sorted(np.array([list(x) for x in self.res[verifier].keys()])[:, 0].tolist())))
             # print(self.evo_params[1], set(sorted(np.array([list(x) for x in self.res[verifier].keys()])[:, 1].tolist())))
 
@@ -416,14 +434,23 @@ class EvoBench:
 
             labels_f1 = labels[0]
             labels_f2 = labels[1]
-            
-            pie_scatter = PieScatter2D(data)
-            pie_scatter.draw_with_ticks(ticks_f1, ticks_f2, labels_f1, labels_f2)
 
             pdf_dir = f"{self.seed_benchmark.settings.root}/figures_{verifier}/"
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
+
+            pie_scatter = PieScatter2D(data)
+
+            pie_scatter.draw_with_ticks(
+                ticks_f1,
+                ticks_f2,
+                labels_f1,
+                labels_f2,
+                legend_size=20,
+                label_size=30,
+                tick_size=20,
+            )
             pie_scatter.save(
-                f"{pdf_dir}/all_{self.state}_{evo_step.iteration}_{evo_step.direction}.png"
+                f"{pdf_dir}/all_{self.state}_{evo_step.iteration}_{evo_step.direction}.pdf"
             )
 
             pie_scatter.draw_with_ticks(
@@ -433,19 +460,22 @@ class EvoBench:
                 labels_f2,
                 x_log_scale=True,
                 y_log_scale=True,
+                legend_size=20,
+                label_size=30,
+                tick_size=20,
+                display_legend=True,
             )
             pie_scatter.save(
-                f"{pdf_dir}/all_log_{self.state}_{evo_step.iteration}_{evo_step.direction}.png"
+                f"{pdf_dir}/all_log_{self.state}_{evo_step.iteration}_{evo_step.direction}.pdf"
             )
-            
-            if self.verifier == 'neurify' and self.explore_iter == 0:
 
-                pie_scatter = PieScatter2D(evo_step.times[verifier])
-                pie_scatter.heatmap( ticks_f1, ticks_f2, labels_f1, labels_f2)
-                
-                pie_scatter.save(
-                    f"{pdf_dir}/hm_{self.state}_{evo_step.iteration}_{evo_step.direction}.png"
-                )
+            # if self.verifier == "neurify" and self.explore_iter == 0:
+            #    pie_scatter = PieScatter2D(evo_step.times[verifier])
+            #    pie_scatter.heatmap(ticks_f1, ticks_f2, labels_f1, labels_f2)
+
+            #    pie_scatter.save(
+            #        f"{pdf_dir}/hm_{self.state}_{evo_step.iteration}_{evo_step.direction}.pdf"
+            #    )
 
         else:
             # plot two factors with properties: |F| >= 3

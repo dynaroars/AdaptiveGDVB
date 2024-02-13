@@ -23,7 +23,7 @@ name = 'MNIST'
 
 [evolutionary]
 	explore_iterations = 10
-	refine_iterations = 1
+	refine_iterations = 2
 	refine_arity = 2
 
 	inflation_rate = 2
@@ -32,6 +32,7 @@ name = 'MNIST'
 	parameters = ['neu', 'fc']
 	parameters_lower_bounds = {'fc'='1/3', 'neu'='1/3'}
 	parameters_upper_bounds = {'fc'='128/3', 'neu'='24'}
+
 
 [train]
 	epochs = 10
@@ -53,7 +54,7 @@ name = 'MNIST'
 	setup_cmds = ['export MKL_SERVICE_FORCE_INTEL=1']
 
 	[verify.verifiers]
-		DNNV = ['neurify']
+		SwarmHost = ['abcrown23']
 
 	[verify.dispatch]
 		platform = "slurm"

@@ -139,17 +139,19 @@ class EvoStep:
                         shape + (nb_property,), dtype=np.int32
                     )
                     times_per_verifiers[verifier] = np.zeros(shape, dtype=np.int32)
-                    
+
                 idx = tuple(indexes[x].index(problem.vpc[x]) for x in self.evo_params)
                 if problem.verification_results[verifier][0] in ["sat", "unsat"]:
                     solved_per_verifiers[verifier][idx] += 1
-                times_per_verifiers[verifier][idx] = problem.verification_results[verifier][1]
+                times_per_verifiers[verifier][idx] = problem.verification_results[
+                    verifier
+                ][1]
                 prop_id = problem.vpc["prop"]
                 answer_code = benchmark.settings.answer_code[
                     problem.verification_results[verifier][0]
                 ]
                 answers_per_verifiers[verifier][idx + (prop_id,)] = answer_code
-                
+
         self.nb_solved = solved_per_verifiers
         self.answers = answers_per_verifiers
         self.times = times_per_verifiers
@@ -160,8 +162,8 @@ class EvoStep:
         Path(cache_dir).mkdir(exist_ok=True, parents=True)
         cache_path = os.path.join(cache_dir, f"{self.iteration}_{self.direction}")
         if self.critical_region_analysis:
-            cache_path+= '_CRA'
-        
+            cache_path += "_CRA"
+
         return cache_path
 
     def save_cache(self):
@@ -185,7 +187,11 @@ class EvoStep:
         cache_answers_path = f"{cache_prefix}_answers.pkl"
         cache_times_path = f"{cache_prefix}_times.pkl"
 
-        if os.path.exists(cache_solved_path) and os.path.exists(cache_answers_path) and os.path.exists(cache_times_path):
+        if (
+            os.path.exists(cache_solved_path)
+            and os.path.exists(cache_answers_path)
+            and os.path.exists(cache_times_path)
+        ):
             cache_hit = True
             with open(cache_solved_path, "rb") as f:
                 self.nb_solved = pickle.load(f)
@@ -220,6 +226,8 @@ class EvoStep:
             pdf_dir = f"{self.benchmark.settings.root}/figures/"
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
             pie_scatter.save(f"{pdf_dir}/{self.iteration}_{self.direction}.png")
+
+            data = list(self.answers.values())[1]
 
         else:
             raise NotImplementedError

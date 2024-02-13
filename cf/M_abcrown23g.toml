@@ -1,4 +1,4 @@
-name = 'MNISTg'
+name = 'MNIST'
 
 [dnn]
 	artifact = 'MNIST'
