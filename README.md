@@ -1,4 +1,4 @@
-# AdaGDVB $\models$ Adaptive Benchmark Generation for DNN Verification
+# [The **AdaGDVB** Framework] Adaptive Benchmark Generation for DNN Verification
 
 
 ## I. Overview
