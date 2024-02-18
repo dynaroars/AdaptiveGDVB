@@ -58,11 +58,11 @@ class EvoBench:
 
     def run(self):
         # init explore
-        print(f"----------[Exploration]----------")
+        self.logger.info(f"----------[Exploration]----------")
         evo_step = self.init_explore()
         while evo_step:
-            print(f"----------[Iteration {evo_step.iteration}]----------")
-            print(
+            self.logger.info(f"----------[Iteration {evo_step.iteration}]----------")
+            self.logger.debug(
                 f"\t{evo_step.direction}, factors: {[str(x) for x in evo_step.factors]}"
             )
 
@@ -78,7 +78,7 @@ class EvoBench:
             evo_step = self.evolve(evo_step)
             self.benchmarks += [evo_step]
 
-        print("EvoGDVB finished successfully!")
+        self.logger.info("EvoGDVB finished successfully!")
 
     def evolve(self, evo_step):
         # A1: Exploration State
@@ -93,7 +93,7 @@ class EvoBench:
             for x in self.evo_params:
                 ua_str += f", {self.pivots_ua[x]}"
                 oa_str += f", {self.pivots_oa[x]}"
-            print(ua_str, oa_str)
+            self.logger.debug(ua_str, oa_str)
 
             explore_limit = self.check_same_ca_configs(
                 evo_step.benchmark.ca_configs, next_ca_configs
@@ -108,15 +108,13 @@ class EvoBench:
             ):
                 self.state = self.EvoState.Refine
                 self.logger.info("Exploration finished successfully!")
-                print("Exploration finished successfully!")
-                print(f"----------[Refinement]----------")
+                self.logger.info(f"----------[Refinement]----------")
                 evo_step = self.init_refine(self.benchmarks[0])
 
         # A2 : Refinement State
         if self.state == self.EvoState.Refine:
             if evo_step.iteration >= self.refine_iter:
                 self.logger.info("Refinement finished successfully!")
-                print("Refinement finished successfully!")
                 return None
             else:
                 next_ca_configs = self.refine(evo_step)
@@ -245,7 +243,7 @@ class EvoBench:
             best_c = [x for x in c if np.prod(x) == np.max(cp)]
 
             if len(best_c) > 1:
-                print(
+                self.logger.warn(
                     f"Interesting. We have two Pivot_Us {best_c}. Using the first one: {best_c[0]}."
                 )
 
@@ -280,7 +278,7 @@ class EvoBench:
                 self.pivots_oa[f] = None
 
     def init_refine(self, evo_step):
-        print("\tInitialize refinement stage.")
+        self.logger.info("\tInitialize refinement stage.")
 
         # clean previous benchmark results for refinement phase
         self.res = None
@@ -303,7 +301,7 @@ class EvoBench:
             f.set_start_end(start, end)
             start, end, levels = f.get()
 
-            print("\t FSEL:", f.type, start, end, levels)
+            self.logger.debug("\t FSEL:", f.type, start, end, levels)
             ca_configs_next["parameters"]["level"][f.type] = levels
             ca_configs_next["parameters"]["range"][f.type] = [start, end]
 
@@ -334,7 +332,7 @@ class EvoBench:
             f.subdivision(arity)
 
             start, end, levels = f.get()
-            print("\t FSEL:", f.type, start, end, levels)
+            self.logger.debug("\t FSEL:", f.type, start, end, levels)
 
             ca_configs_next["parameters"]["level"][f.type] = levels
             ca_configs_next["parameters"]["range"][f.type] = [start, end]
@@ -424,7 +422,6 @@ class EvoBench:
             data2 = np.array(
                 [x for x in self.times[verifier].values()], dtype=np.float32
             )
-            print(len(data2), np.sum(data2))
 
             # print(self.evo_params[0], set(sorted(np.array([list(x) for x in self.res[verifier].keys()])[:, 0].tolist())))
             # print(self.evo_params[1], set(sorted(np.array([list(x) for x in self.res[verifier].keys()])[:, 1].tolist())))

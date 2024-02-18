@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#source .venv/bin/activate
 conda activate adagdvb
 
 # AdaGDVB
@@ -29,7 +28,7 @@ export acts_path="${GDVB}/lib/acts.jar"
 
 alias adagdvb="python -m adagdvb"
 
-export CONDA_HOME=$HOME/Apps/MiniConda3
+export CONDA_HOME=$HOME/Apps/miniconda3
 export MKL_SERVICE_FORCE_INTEL=1
 
 alias rmca='rm -rf results/*/ca*'

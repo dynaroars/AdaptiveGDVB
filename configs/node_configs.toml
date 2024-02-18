@@ -1,3 +1,0 @@
-train_exclude = """ristretto01,ristretto02,ristretto03,ristretto04,lynx02,cheetah01,ai01,sds01,sds02"""
-
-veri_nodes = ['cortado06','cortado08','cortado08','cortado10']
