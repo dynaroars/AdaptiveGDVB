@@ -286,4 +286,6 @@ It is important to note that the extensive research detailed in the paper requir
    2. *New verifiers*: While GDVB provides a pipeline for executing verification tasks, the responsibility of adding new verifiers does not lie with GDVB itself. One can extend the verification frameworks, such as SwarmHost and DNNV, or employ their own scripts for verification tasks. It is recommended to make use of the current SwarmHost framework due to its modular design, which allows for the seamless addition of a new verifier and straightforward navigation. By utilizing an established verification framework, the need for extensive modifications to other components in AdaGDVB or GDVB can be minimized. For further details, kindly refer to the provided instructions in SwarmHost.
 
 ## Acknowledgements
+This material is based in part upon work supported by the National Science Foundation under grant numbers 1900676 and 2019239.
+
 We deeply value your passion for AdaGDVB. Please do not hesitate to contact us if you require any support or direction in utilizing or expanding AdaGDVB.
