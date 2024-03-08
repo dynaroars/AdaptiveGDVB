@@ -292,7 +292,7 @@ This section illustrates the **AdaGDVB** algorithm. encompassing two distinct ph
 The **exploration** loop commences by generating a **GDVB** benchmark *B* in Line 6, followed by executing the verifiers and analyzing the results using the *Evaluate* method in Line 7. Line 8 calculates the two pivot points ($P_u$ and $P_o$) for the current searching space. If both pivots are found(Line 9) or the maximum number of exploration steps is reached (Line 5), **AdaGDVB** transitions from the exploration phase to the **refinement** phase. Otherwise, the *Explore* method computes the factor-level configurations for the next iteration based on the verification results, and the algorithm continues looping at Line 5.
 
 The **refinement** phase initiates by calculating the factor-level configuration using the *Refine* method with the given granularity $g$, as depicted in Lines 18 to 20. It then proceeds with the generation of the **GDVB** benchmark, verifier execution, and results evaluation using the *Evaluate* method from Line 21 to 22. The refinement phase continues until the maximum number of steps is reached in Line 17. If not, it loops back from Line 17 to 23. Ultimately, the **AdaGDVB** algorithm returns the verification performance boundary $B$ and the corresponding results of the verifier.
-<img src='misc/algorithm.png' width='800'>
+<img src='misc/algorithm.png' width='600'>
 
 ## Acknowledgements
 This material is based in part upon work supported by the National Science Foundation under grant numbers 1900676 and 2019239.
