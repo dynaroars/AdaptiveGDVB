@@ -23,7 +23,7 @@ AdaGDVB is an extension of [GDVB](https://link.springer.com/chapter/10.1007/978-
     # 2) install R4V
     git clone https://github.com/edwardxu0/R4V.git $GDVB/lib/R4V
     conda env create --name r4v -f $R4V/.env.d/env.yml
-
+    
     # 3) install verification framework, e.g., SwarmHost
     git clone https://github.com/edwardxu0/SwarmHost.git $GDVB/lib/SwarmHost
     wget https://raw.githubusercontent.com/dlshriver/dnnv/main/tools/resmonitor.py $SwarmHost/lib
@@ -160,7 +160,7 @@ This section describes the parameters used in the configuration file of AdaGDVB 
    [ca]
       # covering array strength
       strength = 2
-
+   
       # verification performance factors
       [ca.parameters]
          # number of levels of each factor
@@ -172,7 +172,7 @@ This section describes the parameters used in the configuration file of AdaGDVB 
             ids = 5
             eps = 5
             prop = 5
-
+   
          # evenly distributed level range
          # GDVB v2: Set upper bound of range to be above 1 to scale up the seed verification problem
          [ca.parameters.range]
@@ -183,7 +183,7 @@ This section describes the parameters used in the configuration file of AdaGDVB 
             ids = ['1/5','1']
             eps = ['1/5','1']
             prop = ['0','4']
-
+   
       # covering array constraints
       [ca.constraints]
          # prevent invalid network specifications
@@ -197,7 +197,7 @@ This section describes the parameters used in the configuration file of AdaGDVB 
       epochs = 10
       # strategies to drop a layer, choose from ['random'], more to be developed
       drop_scheme = 'random'
-
+   
       # ways to dispatch training tasks
       [train.dispatch]
          # platform to use, choose from ['local', 'slurm']
@@ -216,7 +216,7 @@ This section describes the parameters used in the configuration file of AdaGDVB 
       time = 14400
       # memory limit
       memory = '64G'
-
+   
       # choice of Verification Platform and Verifiers
       [verify.verifiers]
          # requires full installation of DNNV, including all verifiers
@@ -236,14 +236,14 @@ This section describes the parameters used in the configuration file of AdaGDVB 
          
          # requires installation of DNNF
          DNNF = ['default']
-
+   
          # requires installation of of SwarmHost
          SwarmHost = ['abcrown',
                   'neuralsat',
                   'mnbab',
                   'nnenum',
                   'verinet']
-
+   
       # ways to dispatch verification tasks
       [verify.dispatch]
          # platform to use, choose from ['local', 'slurm']
@@ -282,8 +282,17 @@ It is important to note that the extensive research detailed in the paper requir
 
 ## VI. Using AdaGDVB with New Architectures and New Verifiers
    This section presents a summary of the application of AdaGDVB in the two prevalent scenarios, namely, when dealing with new architectures or new verifiers. In the first scenario, researchers might be inclined to examine a verifier's VPB over novel neural network architectures, rather than the pre-existing MNIST_3x1024 or CIFAR_convbig. In the second scenario, researchers may be interested in exploring the VPB of their own verifier. Here are a few recommended strategies to initiate the process:
-   1. *New architecture*: Obtain a seed network in the ONNX format and modify the configuration file accordingly. Any new network architectures using the MNIST or CIFAR dataset requires no coding. If a new dataset is introduced, suggested coding locations are `gdvb.artifacts` and `r4v.distillation.data.py`, etc.
-   2. *New verifiers*: While GDVB provides a pipeline for executing verification tasks, the responsibility of adding new verifiers does not lie with GDVB itself. One can extend the verification frameworks, such as SwarmHost and DNNV, or employ their own scripts for verification tasks. It is recommended to make use of the current SwarmHost framework due to its modular design, which allows for the seamless addition of a new verifier and straightforward navigation. By utilizing an established verification framework, the need for extensive modifications to other components in AdaGDVB or GDVB can be minimized. For further details, kindly refer to the provided instructions in SwarmHost.
+      1. *New architecture*: Obtain a seed network in the ONNX format and modify the configuration file accordingly. Any new network architectures using the MNIST or CIFAR dataset requires no coding. If a new dataset is introduced, suggested coding locations are `gdvb.artifacts` and `r4v.distillation.data.py`, etc.
+      2. *New verifiers*: While GDVB provides a pipeline for executing verification tasks, the responsibility of adding new verifiers does not lie with GDVB itself. One can extend the verification frameworks, such as SwarmHost and DNNV, or employ their own scripts for verification tasks. It is recommended to make use of the current SwarmHost framework due to its modular design, which allows for the seamless addition of a new verifier and straightforward navigation. By utilizing an established verification framework, the need for extensive modifications to other components in AdaGDVB or GDVB can be minimized. For further details, kindly refer to the provided instructions in SwarmHost.
+
+## VII. The AdaGDVB Algorithm
+
+This section illustrates the **AdaGDVB** algorithm. encompassing two distinct phases: **exploration** (Lines 1 to 15) and **refinement** (Lines 16 to 23). In the exploration phase, the algorithm begins by setting up the necessary variables in Lines 1 to 4. Line 1 determines the strength of the coverage, which is defined as the number of *factors*. Line 2 initializes the initial levels of the factors. Line 3 initializes the two pivots, while Line 4 initializes the iteration counter.
+
+The **exploration** loop commences by generating a **GDVB** benchmark *B* in Line 6, followed by executing the verifiers and analyzing the results using the *Evaluate* method in Line 7. Line 8 calculates the two pivot points ($P_u$ and $P_o$) for the current searching space. If both pivots are found(Line 9) or the maximum number of exploration steps is reached (Line 5), **AdaGDVB** transitions from the exploration phase to the **refinement** phase. Otherwise, the *Explore* method computes the factor-level configurations for the next iteration based on the verification results, and the algorithm continues looping at Line 5.
+
+The **refinement** phase initiates by calculating the factor-level configuration using the *Refine* method with the given granularity $g$, as depicted in Lines 18 to 20. It then proceeds with the generation of the **GDVB** benchmark, verifier execution, and results evaluation using the *Evaluate* method from Line 21 to 22. The refinement phase continues until the maximum number of steps is reached in Line 17. If not, it loops back from Line 17 to 23. Ultimately, the **AdaGDVB** algorithm returns the verification performance boundary $B$ and the corresponding results of the verifier.
+<img src='misc/algorithm.png ' width='800'>
 
 ## Acknowledgements
 This material is based in part upon work supported by the National Science Foundation under grant numbers 1900676 and 2019239.
