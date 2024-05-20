@@ -93,7 +93,7 @@ class EvoBench:
             for x in self.evo_params:
                 ua_str += f", {self.pivots_ua[x]}"
                 oa_str += f", {self.pivots_oa[x]}"
-            self.logger.debug(ua_str, oa_str)
+            self.logger.debug(ua_str + oa_str)
 
             explore_limit = self.check_same_ca_configs(
                 evo_step.benchmark.ca_configs, next_ca_configs

@@ -227,7 +227,7 @@ class EvoStep:
             Path(pdf_dir).mkdir(parents=True, exist_ok=True)
             pie_scatter.save(f"{pdf_dir}/{self.iteration}_{self.direction}.png")
 
-            data = list(self.answers.values())[1]
+            #data = list(self.answers.values())[1]
 
         else:
             raise NotImplementedError

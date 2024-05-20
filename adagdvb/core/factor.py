@@ -84,6 +84,11 @@ class Factor:
 
     def subdivision(self, arity):
         self.nb_levels = int(self.nb_levels * F(arity))
+
+        # save time
+        #print(self.nb_levels)
+        #self.nb_levels = int(self.nb_levels * F(arity)) - 1
+        #print(self.nb_levels)
         self._workout()
 
     def get(self):
