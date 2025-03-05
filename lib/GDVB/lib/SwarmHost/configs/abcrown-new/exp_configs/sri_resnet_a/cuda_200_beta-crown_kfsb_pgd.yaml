@@ -1,0 +1,24 @@
+attack:
+  pgd_order: before
+bab:
+  attack:
+    enabled: false
+  batched_domain_list: false
+  branching:
+    method: kfsb
+    reduceop: max
+  get_upper_bound: false
+  max_domains: 100000
+data:
+  dataset: CIFAR
+general:
+  complete_verifier: bab
+  device: cuda
+  enable_incomplete_verification: true
+model:
+  onnx_quirks: '{''Reshape'': {''fix_batch_size'': True}}'
+solver:
+  batch_size: 200
+  beta-crown:
+    beta: true
+  bound_prop_method: alpha-crown

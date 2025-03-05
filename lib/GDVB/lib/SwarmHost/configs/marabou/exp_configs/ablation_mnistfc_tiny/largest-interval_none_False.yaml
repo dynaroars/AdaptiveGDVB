@@ -1,0 +1,5 @@
+branch: largest-interval
+num_workers: 64
+snc: false
+tightening_strategy: none
+verbosity: 2

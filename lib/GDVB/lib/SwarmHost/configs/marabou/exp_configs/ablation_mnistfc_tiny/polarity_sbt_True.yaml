@@ -1,0 +1,5 @@
+branch: polarity
+num_workers: 64
+snc: true
+tightening_strategy: sbt
+verbosity: 2

@@ -1,0 +1,17 @@
+attack:
+  pgd_order: skip
+bab:
+  branching:
+    method: kfsb
+    reduceop: max
+  max_domains: 100000
+data:
+  dataset: vnncomp21
+general:
+  complete_verifier: bab-refine
+  device: cpu
+  enable_incomplete_verification: true
+solver:
+  beta-crown:
+    batch_size: 1
+    beta: true

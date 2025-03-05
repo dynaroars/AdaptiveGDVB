@@ -1,0 +1,20 @@
+attack:
+  pgd_order: before
+bab:
+  attack:
+    enabled: false
+  batched_domain_list: false
+  branching:
+    method: babsr
+    reduceop: max
+  get_upper_bound: false
+  max_domains: 60000
+data:
+  dataset: mcb
+general:
+  complete_verifier: bab
+  device: cuda
+  enable_incomplete_verification: false
+solver:
+  batch_size: 1
+  bound_prop_method: alpha-crown

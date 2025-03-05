@@ -1,0 +1,5 @@
+branch: pseudo-impact
+num_workers: 64
+snc: false
+tightening_strategy: sbt
+verbosity: 2

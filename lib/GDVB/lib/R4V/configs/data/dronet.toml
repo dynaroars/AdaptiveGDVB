@@ -1,0 +1,19 @@
+format="dronet"
+batchsize=200
+presized=false
+
+[student]
+path="artifacts/dronet/testing"
+# path="artifacts/dronet/validation"
+# path="artifacts/dronet/training"
+
+[student.transform]
+grayscale=true
+
+[teacher]
+path="artifacts/dronet/testing"
+# path="artifacts/dronet/validation"
+# path="artifacts/dronet/training"
+
+[teacher.transform]
+grayscale=true

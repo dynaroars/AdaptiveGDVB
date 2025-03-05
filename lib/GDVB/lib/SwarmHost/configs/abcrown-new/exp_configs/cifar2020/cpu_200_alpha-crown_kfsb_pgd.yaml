@@ -1,0 +1,22 @@
+attack:
+  pgd_order: before
+bab:
+  attack:
+    enabled: false
+  batched_domain_list: true
+  branching:
+    method: kfsb
+    reduceop: max
+  get_upper_bound: false
+  max_domains: 50000
+data:
+  dataset: CIFAR
+general:
+  complete_verifier: bab
+  device: cpu
+  enable_incomplete_verification: true
+solver:
+  batch_size: 200
+  beta-crown:
+    beta: false
+  bound_prop_method: alpha-crown

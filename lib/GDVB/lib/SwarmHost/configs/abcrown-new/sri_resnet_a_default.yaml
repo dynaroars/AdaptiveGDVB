@@ -1,0 +1,24 @@
+general:
+  enable_incomplete_verification: true
+  complete_verifier: bab
+  device: cuda
+data:
+  dataset: CIFAR
+solver:
+  bound_prop_method: alpha-crown
+  batch_size: 1
+  beta-crown:
+    beta: false
+bab:
+  max_domains: 100000
+  get_upper_bound: False  # Needed to be TRUE for Bab-Attack.
+  batched_domain_list: False  # Needed to be FALSE for BaB-Attack.
+  branching:
+    method: babsr
+    reduceop: max
+  attack: # bab-attack
+    enabled: False
+attack: # pgd-attack
+  pgd_order: before
+model:
+  onnx_quirks: "{'Reshape': {'fix_batch_size': True}}"

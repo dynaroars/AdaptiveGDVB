@@ -3,7 +3,7 @@
 /results
 /attic
 /data
-/lib
+# /lib
 /.idea/
 /pdfs_*
 /img*

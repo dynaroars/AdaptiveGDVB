@@ -1,0 +1,5 @@
+num_workers: 128
+snc: False
+tightening_strategy: deeppoly # (sbt/deeppoly/none)
+branch: polarity # (earliest-relu/pseudo-impact/largest-interval/relu-violation/polarity)
+verbosity: 1

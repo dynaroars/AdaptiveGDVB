@@ -1,0 +1,15 @@
+format="dronet"
+batchsize=200
+presized=true
+
+[student]
+path="artifacts/dronet.200/testing"
+
+[transform.student]
+grayscale=true
+
+[teacher]
+path="artifacts/dronet.200/testing"
+
+[transform.teacher]
+grayscale=true

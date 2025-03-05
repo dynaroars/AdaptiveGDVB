@@ -1,0 +1,22 @@
+attack:
+  pgd_order: before
+bab:
+  attack:
+    enabled: false
+  batched_domain_list: false
+  branching:
+    method: fsb
+    reduceop: max
+  get_upper_bound: false
+  max_domains: 60000
+data:
+  dataset: mcb
+general:
+  complete_verifier: bab
+  device: cpu
+  enable_incomplete_verification: false
+solver:
+  batch_size: 1
+  beta-crown:
+    all_node_split_LP: true
+  bound_prop_method: crown

@@ -1,0 +1,4 @@
+branch: approx
+split: smallest
+abstraction:
+  level: 1

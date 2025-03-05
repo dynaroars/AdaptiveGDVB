@@ -1,0 +1,17 @@
+general:
+  enable_incomplete_verification: true
+  complete_verifier: bab-refine
+  device: cuda
+data:
+  dataset: vnncomp21
+solver:
+  beta-crown:
+    beta: false
+    batch_size: 100
+bab:
+  max_domains: 100000
+  branching:
+    method: kfsb
+    reduceop: max
+attack: # pgd-attack
+  pgd_order: before

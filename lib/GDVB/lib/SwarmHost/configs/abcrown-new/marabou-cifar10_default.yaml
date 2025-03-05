@@ -1,0 +1,24 @@
+general:
+  enable_incomplete_verification: false
+  complete_verifier: bab
+  device: cuda
+data:
+  dataset: CIFAR
+solver:
+  bound_prop_method: alpha-crown
+  batch_size: 1
+  beta-crown:
+    beta: false
+bab:
+  max_domains: 50000
+  get_upper_bound: false  # Needed to be TRUE for Bab-Attack.
+  batched_domain_list: false  # Needed to be FALSE for BaB-Attack.
+  branching:
+    method: babsr
+    reduceop: max
+  attack: # bab-attack
+    enabled: false
+attack: # pgd-attack
+  pgd_order: before
+model:
+  onnx_loader: Customized("custom_model_loader", "customized_Marabou_loader")

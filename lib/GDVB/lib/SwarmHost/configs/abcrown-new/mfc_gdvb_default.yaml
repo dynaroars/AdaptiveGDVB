@@ -1,0 +1,22 @@
+general:
+  enable_incomplete_verification: false
+  complete_verifier: bab
+  device: cuda
+data:
+  dataset: mcb
+solver:
+  bound_prop_method: crown
+  batch_size: 1
+  beta-crown:
+    all_node_split_LP: True
+bab:
+  max_domains: 60000
+  get_upper_bound: false  # Needed to be TRUE for Bab-Attack.
+  batched_domain_list: false  # Needed to be FALSE for BaB-Attack.
+  branching:
+    method: babsr
+    reduceop: max
+  attack: # bab-attack
+    enabled: false
+attack: # pgd-attack
+  pgd_order: skip
