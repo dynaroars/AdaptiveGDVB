@@ -23,7 +23,7 @@ class ABCrown(Verifier):
     
 
     def run(self, config_path, model_path, property_path, log_path, time, memory):
-        
+        print("debug -- config path:", self.configs)
         if self.configs['version'] == 22:
             cmd = f"$SwarmHost/scripts/run_abcrown22.sh"
         elif self.configs['version'] == 23:
@@ -41,13 +41,42 @@ class ABCrown(Verifier):
         else:
             pass
 
-        cmd += f" --onnx_path {model_path} --vnnlib_path {property_path} --timeout {time}"
+        cmd += f" --onnx_path {model_path} --vnnlib_path {property_path} --timeout {time} --config /home/nguyenho/AdaGDVB/lib/GDVB/lib/SwarmHost/swarm_host/verifiers/abcrown/abcrown.yml"
         print(cmd)
         self.execute(cmd, log_path, time, memory)
 
     def analyze(self):
+        """
+        the logger print out in between line of logging file which affect the analysis process
+        rewrite lines to put INFO into a new line
+        """
+        def reformat_lines(lines):
+            new_lines = []
+            i = 0
+            size = len(lines)
+            while i < size:
+                line = lines[i]
+                if "INFO" in line and "(resmonitor)" in line and not line.startswith("INFO"):
+                    curr = line
+                    regular, info = curr.split("INFO     ")
+                    info = "INFO     " + info
+                    i += 1
+                    new_lines.append(info)
+                    while lines[i].startswith("INFO"):
+                        new_lines.append(lines[i])
+                        i += 1
+                    regular += lines[i]
+                    new_lines.append(regular)
+                    i += 1
+                    continue
+                new_lines.append(line)
+                i += 1
+
+            return new_lines
+
         with open(self.verification_problem.paths["veri_log_path"], "r") as fp:
             lines = fp.readlines()
+        lines = reformat_lines(lines)
         veri_ans, veri_time = super().pre_analyze(lines)
 
         if not (veri_ans and veri_time):
