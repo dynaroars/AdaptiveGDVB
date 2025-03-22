@@ -41,7 +41,7 @@ class ABCrown(Verifier):
         else:
             pass
 
-        cmd += f" --onnx_path {model_path} --vnnlib_path {property_path} --timeout {time} --config /home/nguyenho/AdaGDVB/lib/GDVB/lib/SwarmHost/swarm_host/verifiers/abcrown/abcrown.yml"
+        cmd += f" --onnx_path {model_path} --vnnlib_path {property_path} --timeout {time} --config $SwarmHost/swarm_host/verifiers/abcrown/abcrown.yml"
         print(cmd)
         self.execute(cmd, log_path, time, memory)
 

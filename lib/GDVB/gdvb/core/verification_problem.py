@@ -330,7 +330,6 @@ class VerificationProblem:
             ram_issue = False
             CUDA_ram_issue = False
             protobuf_2g_issue = False
-            print("\n".join(lines[:20]))
             for l in reversed(lines):
                 if "Out of Memory" in l:
                     ram_issue = True

@@ -2,7 +2,8 @@
 general:
     #enable_incomplete_verification: true
     complete_verifier: bab
-    device: cpu #cuda
+    # device: cpu #cuda
+    device: cuda #cuda
 data:
    dataset: MNIST
    start: 0

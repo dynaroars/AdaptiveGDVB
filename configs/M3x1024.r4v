@@ -7,7 +7,7 @@ precompute_teacher=true
 save_intermediate=false
 
 [distillation.parameters]
-epochs=10
+epochs=2
 optimizer="adam"
 loss="MSE"
 learning_rate=1e-3
