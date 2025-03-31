@@ -8,7 +8,7 @@
 # export MKL_SERVICE_FORCE_INTEL=1
 
 # cmd="python $SwarmHost/lib/abcrown/complete_verifier/abcrown.py $@"
-cmd="/home/nguyenho/miniconda3/envs/adagdvb/bin/python $SwarmHost/lib/abcrown/complete_verifier/abcrown.py $@"
+cmd="python $SwarmHost/lib/abcrown/complete_verifier/abcrown.py $@"
 
 echo $cmd
 $cmd

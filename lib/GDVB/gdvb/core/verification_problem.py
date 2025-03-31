@@ -91,12 +91,12 @@ class VerificationProblem:
         self.dis_config_path = os.path.join(
             self.settings.dis_config_dir, self.net_name + ".toml"
         )
+        # self.dis_model_path = os.path.join(
+        #     self.settings.dis_model_dir, self.net_name + ".onnx"
+        # )
         self.dis_model_path = os.path.join(
-            self.settings.dis_model_dir, self.net_name + ".onnx"
+           self.settings.dis_model_dir, self.net_name, self.net_name + ".onnx"
         )
-        #self.dis_model_path = os.path.join(
-        #    self.settings.dis_model_dir, self.net_name, self.net_name + ".onnx"
-        #)
         self.dis_log_path = os.path.join(
             self.settings.dis_log_dir, self.net_name + ".out"
         )
