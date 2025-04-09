@@ -56,9 +56,9 @@ class LocalRobustnessProperty(Property):
         if self.property_configs["mrb"]:
             assert  model_path
             
-            model = onnx.load(model_path, load_external_data=False).SerializeToString()
-            #model = onnx.load(model_path,load_external_data=True).SerializeToString()
-            session = ort.InferenceSession(model)
+            # model = onnx.load(model_path, load_external_data=False).SerializeToString()
+            # model = onnx.load(model_path, load_external_data=True).SerializeToString()
+            session = ort.InferenceSession(model_path)
             #names = [i.name for i in sess.get_inputs()]
             #label= sess.run(None, dict(zip(names, img_npy)))
             session.get_modelmeta()
