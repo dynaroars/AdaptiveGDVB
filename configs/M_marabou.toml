@@ -20,7 +20,7 @@ name = 'MNIST'
 
 [evolutionary]
 	explore_iterations = 10
-	refine_iterations = 1
+	refine_iterations = 2
 	refine_arity = 2
 
 	inflation_rate = 2
@@ -32,7 +32,7 @@ name = 'MNIST'
 
 
 [train]
-	epochs = 10
+	epochs = 3
 	drop_scheme = 'random'
 	add_scheme = 'last_same_relu'
 
