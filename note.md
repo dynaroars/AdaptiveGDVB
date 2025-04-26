@@ -1,0 +1,3 @@
+- Check pip list
+- Adjust neuralSat script
+- Update epochs
