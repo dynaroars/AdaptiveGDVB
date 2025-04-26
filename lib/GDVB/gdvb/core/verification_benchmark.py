@@ -6,6 +6,7 @@ import copy
 import time
 import concurrent.futures
 import threading
+import torch
 
 import numpy as np
 from tqdm import tqdm
@@ -469,17 +470,27 @@ class VerificationBenchmark:
             total=len(nets_to_train), desc="Training ... ", ascii=False, file=sys.stdout
         )
 
-        # Train a network
-        def concurrent_train(network):
-            self.settings.logger.info(f"Training network {network.net_name} with current thread: {threading.current_thread().getName()}")
-            network.train()
+        # def concurrent_train(network):
+        #     self.settings.logger.info(f"Training network {network.net_name} with current thread: {threading.current_thread().getName()}")
+        #     network.train()
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            future_to_train_network = {executor.submit(concurrent_train, n): n.net_name for n in nets_to_train}
-            for future in concurrent.futures.as_completed(future_to_train_network):
-                self.settings.logger.info(f"Finished network: {future_to_train_network[future]} ...")
-                progress_bar.update(1)
-                progress_bar.refresh()
+        # with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        #     future_to_train_network = {executor.submit(concurrent_train, n): n.net_name for n in nets_to_train}
+        #     for future in concurrent.futures.as_completed(future_to_train_network):
+        #         self.settings.logger.info(f"Finished network: {future_to_train_network[future]} ...")
+        #         progress_bar.update(1)
+        #         progress_bar.refresh()
+
+        # Train a network
+        for n in nets_to_train:
+            self.settings.logger.info(f"Training network: {n.net_name} ...")
+            n.train()
+            progress_bar.update(1)
+            progress_bar.refresh()
+
+            # Clear CUDA memory
+            with torch.no_grad():
+                torch.cuda.empty_cache()
 
         progress_bar.close()
 
