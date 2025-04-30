@@ -1,3 +1,4 @@
 - Check pip list
 - Adjust neuralSat script
 - Update epochs
+- Kill zombie `pkill -9 -f main.py`
