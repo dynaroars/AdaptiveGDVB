@@ -484,6 +484,10 @@ class VerificationBenchmark:
         # Train a network
         for n in nets_to_train:
             self.settings.logger.info(f"Training network: {n.net_name} ...")
+            # Clear CUDA memory
+            with torch.no_grad():
+                torch.cuda.empty_cache()
+
             n.train()
             progress_bar.update(1)
             progress_bar.refresh()
@@ -711,7 +715,14 @@ class VerificationBenchmark:
             if tool != "SwarmHost":
                 vp.gen_prop()
 
+            
+            # Clear CUDA memory
+            with torch.no_grad():
+                torch.cuda.empty_cache()
             vp.verify(tool, options)
+            # Clear CUDA memory
+            with torch.no_grad():
+                torch.cuda.empty_cache()
             progress_bar.update(1)
             progress_bar.refresh()
         progress_bar.close()
