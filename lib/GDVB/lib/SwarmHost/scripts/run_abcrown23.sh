@@ -7,10 +7,12 @@
 # which python
 # export MKL_SERVICE_FORCE_INTEL=1
 
+# # cmd="python $SwarmHost/lib/abcrown/complete_verifier/abcrown.py $@"
 # cmd="python $SwarmHost/lib/abcrown/complete_verifier/abcrown.py $@"
-cmd="python $SwarmHost/lib/abcrown/complete_verifier/abcrown.py $@"
 
-echo $cmd
-$cmd
+# echo $cmd
+# $cmd
 
 # conda deactivate
+
+conda run -n abcrown python $SwarmHost/lib/abcrown/complete_verifier/abcrown.py $@

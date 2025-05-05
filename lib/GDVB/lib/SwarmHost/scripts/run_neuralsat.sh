@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# . ${SwarmHost}/scripts/init_conda.sh
-# #conda activate neuralsat
+. ${SwarmHost}/scripts/init_conda.sh
+# conda activate neuralsat
 # conda activate neuralsat2
 
 # which python
@@ -9,8 +9,8 @@
 
 #cmd="python $SwarmHost/lib/neuralsat/src/main.py $@"
 #cmd="python $SwarmHost/lib/neuralsat/neuralsat/main.py $@"
-cmd="python $SwarmHost/lib/neuralsat/neuralsat-pt201/main.py $@"
-echo $cmd
-$cmd
+# cmd="python $SwarmHost/lib/neuralsat/neuralsat-pt201/main.py $@"
+# echo $cmd
+# $cmd
 
-# conda deactivate
+conda run -n neuralsat python $SwarmHost/lib/neuralsat/neuralsat-pt201/main.py $@

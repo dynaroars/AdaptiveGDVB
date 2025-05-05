@@ -1,6 +1,6 @@
 #!/bin/bash
 
-conda activate swarmhost
+# conda activate swarmhost
 
 if [ -z ${SwarmHost} ]; then
   export SwarmHost=`pwd`
