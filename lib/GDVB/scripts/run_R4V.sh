@@ -8,5 +8,5 @@
 # /home/nguyenho/miniconda3/envs/r4v/bin/python -m r4v $@
 
 # python -m r4v $@
-conda run -n swarmhost python -m r4v $@
+conda run -n r4v python -m r4v $@
 
