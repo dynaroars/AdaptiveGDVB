@@ -29,6 +29,11 @@ conda env create --name neuralsat -f $SwarmHost/lib/neuralsat/env.yaml
 git clone https://github.com/stanleybak/nnenum.git $SwarmHost/lib/nnenum
 conda env create --name nnenum -f $SwarmHost/envs/nnenum.yml
 
+# marabou
+git clone https://github.com/NeuralNetworkVerification/Marabou.git $SwarmHost/lib/marabou
+conda create --name marabou python==3.9
+cd $SwarmHost/lib/marabou
+
 # mn-bab
 git clone --recursive https://github.com/eth-sri/mn-bab.git $SwarmHost/lib/mnbab
 conda env create --name mnbab -f $SwarmHost/envs/mnbab.yml
