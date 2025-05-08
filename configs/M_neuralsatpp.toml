@@ -43,7 +43,7 @@ name = 'MNIST'
 [verify]
 	eps = 0.02
 	time = 600
-	memory = '16G'
+	memory = '128G'
 
 	[verify.verifiers]
 		SwarmHost = ['neuralsatpp']

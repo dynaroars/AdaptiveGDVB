@@ -19,7 +19,7 @@ name = 'MNIST'
 			prop = [0, 4]
 
 [evolutionary]
-	explore_iterations = 3
+	explore_iterations = 10
 	refine_iterations = 2
 	refine_arity = 2
 
@@ -46,7 +46,7 @@ name = 'MNIST'
 	memory = '16G'
 
 	[verify.verifiers]
-		SwarmHost = ['nnenum']
+		SwarmHost = ['marabou', 'nnenum', 'neuralsatpp', 'abcrown23g']
 
 	[verify.dispatch]
 		platform = "local"
