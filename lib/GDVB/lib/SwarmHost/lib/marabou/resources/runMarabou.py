@@ -47,8 +47,10 @@ def main():
     MarabouCore.saveQuery(query, name)
 
     print("Running Marabou with the following arguments: ", unknown)
-    subprocess.run([marabou_binary] + ["--input-query={}".format(name)] + unknown )
+    process = subprocess.run([marabou_binary] + ["--input-query={}".format(name)] + unknown )
     os.remove(name)
+    if process.returncode != 0:
+        print("RuntimeError")
     print(f'Runtime: {time.time() - tic}')
 
 def createQuery(args):

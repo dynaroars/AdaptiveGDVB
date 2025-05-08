@@ -36,6 +36,8 @@ class Marabou(Verifier):
                     veri_ans = "unsat"
                 elif "Runtime:" in l:
                     veri_time = float(l.strip().split()[-1])
+                elif "RuntimeError" in l:
+                    veri_ans = "error"
                 
                 if veri_ans and veri_time:
                     break
