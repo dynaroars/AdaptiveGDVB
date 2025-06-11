@@ -464,14 +464,15 @@ class VerificationProblem:
         if not self.settings.override and self.verified():
             self.settings.logger.info("Skipping verified problem ...")
             return
+        prop_id = 0 if "prop" not in self.vpc else self.vpc["prop"]
 
         if "eps" in self.vpc:
             eps = F(str(self.vpc["eps"])) * F(str(configs_v["eps"]))
         else:
-            eps = configs_v["eps"]
+            eps = configs_v["eps"][prop_id]
+
         eps = round(float(eps), self.settings.precision)
 
-        prop_id = 0 if "prop" not in self.vpc else self.vpc["prop"]
 
         property_path = os.path.join(self.prop_dir, f"robustness_{prop_id}_{eps}.py")
 

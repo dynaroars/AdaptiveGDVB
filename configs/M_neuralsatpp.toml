@@ -41,7 +41,7 @@ name = 'MNIST'
 
 
 [verify]
-	eps = 0.02
+	eps = [0.02, 0.04, 0.06, 0.08, 0.1]
 	time = 600
 
 	[verify.verifiers]
