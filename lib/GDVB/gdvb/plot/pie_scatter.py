@@ -16,7 +16,7 @@ rc("text", usetex=True)
 fontP = FontProperties()
 
 
-answers_pool = ["unsat", "sat", "unknown", "oor", "error", "hardware"]
+answers_pool = ["unsat", "sat", "unknown", "oor", "error", "hardware", "hard"]
 legend_labels = [
     "Unsat",
     "Sat",
@@ -24,8 +24,9 @@ legend_labels = [
     "Out of resource",
     "Error",
     "Model not trained\n due to GPU RAM limit",
+    "Hard"
 ]
-color_list = ["lightgreen", "deepskyblue", "yellow", "darkorange", "crimson", "grey"]
+color_list = ["lightgreen", "deepskyblue", "yellow", "darkorange", "crimson", "grey", "black"]
 
 label_code = {
     "neu": r"\textbf{Factor} \textit{level} scale($\times$): Neurons",

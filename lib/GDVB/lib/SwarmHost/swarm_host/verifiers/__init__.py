@@ -51,10 +51,12 @@ class Verifier:
 
         return veri_ans, veri_time
 
-    def post_analyze(self, answer, time):
+    def post_analyze(self, answer, time, iteration_count):
         if answer != 'timeout' and time > self.verification_problem.verifier_config["time"]:
             answer = 'timeout'
             time = self.verification_problem.verifier_config["time"]
+        if answer in ["sat", "unsat"] and iteration_count >= 1:
+            answer = "hard"
         return answer, time
 
     """

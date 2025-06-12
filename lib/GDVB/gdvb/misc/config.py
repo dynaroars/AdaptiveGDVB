@@ -65,7 +65,8 @@ class Settings:
             "timeout": 4,
             "memout": 4,
             "error": 5,
-            "hardware_limit": 6
+            "hardware_limit": 6,
+            "hard": 7
         }
         self._make_dirs()
 

@@ -737,6 +737,7 @@ class VerificationProblem:
                 "unrun",
                 "undetermined",
                 "hardware_limit",
+                "hard"
             ], f"{verification_answer}:{log_path}"
 
             # double check verification time to recover time loss

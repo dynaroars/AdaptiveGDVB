@@ -141,7 +141,7 @@ class EvoStep:
                     times_per_verifiers[verifier] = np.zeros(shape, dtype=np.int32)
 
                 idx = tuple(indexes[x].index(problem.vpc[x]) for x in self.evo_params)
-                if problem.verification_results[verifier][0] in ["sat", "unsat"]:
+                if problem.verification_results[verifier][0] in ["sat", "unsat", "hard"]:
                     solved_per_verifiers[verifier][idx] += 1
                 times_per_verifiers[verifier][idx] = problem.verification_results[
                     verifier
