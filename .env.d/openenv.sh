@@ -16,12 +16,14 @@ export DNNV="${GDVB}/lib/DNNV"
 export DNNV_wb="${GDVB}/lib/DNNV_wb"
 export DNNF="${GDVB}/lib/DNNF"
 export SwarmHost="${GDVB}/lib/SwarmHost"
+export ReluSplitter="${AdaGDVB}/lib/relusplitter"
 
 # Path
 export PYTHONPATH="${PYTHONPATH}:${AdaGDVB}"
 export PYTHONPATH="${PYTHONPATH}:${GDVB}"
 export PYTHONPATH="${PYTHONPATH}:${R4V}"
 export PYTHONPATH="${PYTHONPATH}:${SwarmHost}"
+export PYTHONPATH="${PYTHONPATH}:${ReluSplitter}:${ReluSplitter}/libs"
 
 # misc
 export acts_path="${GDVB}/lib/acts.jar"

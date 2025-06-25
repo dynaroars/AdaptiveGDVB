@@ -56,6 +56,7 @@ def main():
             else:
                 vp.generate_property(format=args.property_format, model_path=paths['model_path'])
 
+            vp.harden_benchmark()
             vp.verify()
         case "A":
             a,t = vp.analyze()

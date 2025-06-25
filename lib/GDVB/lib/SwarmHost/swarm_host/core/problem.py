@@ -8,6 +8,9 @@ from ..verifiers.marabou import Marabou
 
 from .property import Property, LocalRobustnessProperty
 
+import subprocess
+import os
+
 
 class VerificationProblem:
     def __init__(
@@ -87,16 +90,34 @@ class VerificationProblem:
             raise NotImplementedError()
         self.logger.info(f"Property generated.")
 
+    def harden_benchmark(self):
+
+        model_path = self.paths["model_path"]
+        output_path = model_path.split(".onnx")[0] + f"_harder_{self.property_configs['id']}.onnx"
+        self.paths['harder_model_path'] = output_path
+
+        # Check if the harden model is created
+        if os.path.exists(output_path):
+            self.logger.info(f"Skip hardening the model: {output_path}")
+            return
+
+        cmd = f"$SwarmHost/scripts/run_relusplitter.sh"
+        cmd += f" --net {model_path}"
+        cmd += f" --spec {self.property.property_path}"
+        cmd += f" --output {output_path}"
+
+        subprocess.run(cmd, shell=True)
+
     def verify(self):
         config_path = self.paths["veri_config_path"]
-        model_path = self.paths["model_path"]
         property_path = self.property.property_path
         log_path = self.paths["veri_log_path"]
         time = self.verifier_config["time"]
-        
+        harder_model = self.paths["harder_model_path"]
         self.verifier.configure(config_path)
         
-        return self.verifier.run(config_path, model_path, property_path, log_path, time)
+        print("Verifying started")
+        return self.verifier.run(config_path, harder_model, property_path, log_path, time)
 
     def analyze(self):
         return self.verifier.analyze()
