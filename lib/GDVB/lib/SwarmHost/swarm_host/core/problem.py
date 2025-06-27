@@ -107,6 +107,9 @@ class VerificationProblem:
         cmd += f" --output {output_path}"
 
         subprocess.run(cmd, shell=True)
+        if not os.path.exists(output_path):
+            self.logger.info(f"exceeds maximum protobuf size of 2GB")
+
 
     def verify(self):
         config_path = self.paths["veri_config_path"]
@@ -116,7 +119,7 @@ class VerificationProblem:
         harder_model = self.paths["harder_model_path"]
         self.verifier.configure(config_path)
         
-        print("Verifying started")
+        self.logger.info("Verifying started")
         return self.verifier.run(config_path, harder_model, property_path, log_path, time)
 
     def analyze(self):
