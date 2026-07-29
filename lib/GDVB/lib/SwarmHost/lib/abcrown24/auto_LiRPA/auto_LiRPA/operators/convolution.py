@@ -3,10 +3,10 @@
 ##   α,β-CROWN (alpha-beta-CROWN) neural network verifier developed    ##
 ##   by the α,β-CROWN Team                                             ##
 ##                                                                     ##
-##   Copyright (C) 2020-2025 The α,β-CROWN Team                        ##
-##   Primary contacts: Huan Zhang <huan@huan-zhang.com> (UIUC)         ##
-##                     Zhouxing Shi <zshi@cs.ucla.edu> (UCLA)          ##
-##                     Xiangru Zhong <xiangru4@illinois.edu> (UIUC)    ##
+##   Copyright (C) 2020-2024 The α,β-CROWN Team                        ##
+##   Primary contacts: Huan Zhang <huan@huan-zhang.com>                ##
+##                     Zhouxing Shi <zshi@cs.ucla.edu>                 ##
+##                     Kaidi Xu <kx46@drexel.edu>                      ##
 ##                                                                     ##
 ##    See CONTRIBUTORS for all author contacts and affiliations.       ##
 ##                                                                     ##
@@ -51,8 +51,6 @@ class BoundConv(Bound):
             self.has_bias = False
         self.relu_followed = False
         self.patches_start = True
-        if options is None:
-            options = {}
         self.mode = options.get("conv_mode", "matrix")
         # denote whether this Conv is followed by a ReLU
         # if self.relu_followed is False, we need to manually pad the conv patches.
@@ -91,7 +89,7 @@ class BoundConv(Bound):
                         self.padding[0] - 1 - (int(weight.size()[2] - 1) * self.dilation[0]))
                     output_padding1 = (
                         int(self.input_shape[3]) - (int(self.output_shape[3]) - 1) * self.stride[1] + 2 *
-                        self.padding[1] - 1 - (int(weight.size()[3] - 1) * self.dilation[1]))
+                        self.padding[1] - 1 - (int(weight.size()[3] - 1) * self.dilation[0]))
                     next_A = F.conv_transpose2d(
                         last_A.reshape(shape[0] * shape[1], *shape[2:]), weight, None,
                         stride=self.stride, padding=self.padding, dilation=self.dilation,

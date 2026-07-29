@@ -1,0 +1,3 @@
+commit: 7b66dab (September 2022 release, 2022-09-21)
+source: https://github.com/Verified-Intelligence/alpha-beta-CROWN.git
+selection rationale: verified via arguments.py/bab.py structural diff (see AdaGDVB research plan)
